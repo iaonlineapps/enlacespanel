@@ -246,6 +246,7 @@ bash uninstall.sh
    enlaces, fotos, usuarios y estadísticas). Hay que escribir `BORRAR` para confirmarlo; si dices
    que no, se quedan y al reinstalar se usan otra vez.
 5. Pregunta si borrar la **carpeta del programa**.
+6. Se despide con un mensaje de agradecimiento. 🙂
 
 La app de Android se desinstala como cualquier otra, desde el móvil.
 
