@@ -86,8 +86,27 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .qr img{width:100%;border-radius:12px;border:1px solid var(--line);background:#fff}
 /* teléfono */
 .stage{position:sticky;top:16px}
-.phone{width:100%;max-width:360px;margin:0 auto;aspect-ratio:9/18.5;border-radius:44px;padding:12px;background:#111;box-shadow:0 30px 60px -20px #0006,inset 0 0 0 2px #333}
+.pvbox{position:relative;width:100%;transition:height .45s cubic-bezier(.3,1,.4,1)}
+.pvdev{position:absolute;left:0;top:0;transform-origin:0 0;background:#111;border-radius:44px;padding:10px;
+  box-shadow:0 30px 60px -20px #0006,inset 0 0 0 2px #333;transition:transform .45s cubic-bezier(.3,1,.4,1),border-radius .3s}
+.pvdev.tablet{border-radius:30px}
+.pvdev.pc{border-radius:12px;padding:28px 8px 8px}
+.pvdev.pc::before{content:"";position:absolute;top:11px;left:14px;width:42px;height:8px;border-radius:4px;
+  background:radial-gradient(circle at 4px 4px,#ff5f57 3.5px,transparent 4px),radial-gradient(circle at 21px 4px,#febc2e 3.5px,transparent 4px),radial-gradient(circle at 38px 4px,#28c840 3.5px,transparent 4px)}
 .screen{width:100%;height:100%;border:0;border-radius:34px;display:block;background:#fff}
+.pvdev.tablet .screen{border-radius:22px}.pvdev.pc .screen{border-radius:4px}
+main.ed{transition:grid-template-columns .45s}
+main.ed[data-dev=tablet]{grid-template-columns:minmax(0,1fr) minmax(0,460px)}
+main.ed[data-dev=pc]{grid-template-columns:minmax(0,1fr) minmax(0,600px);max-width:1400px}
+/* icono de los botones */
+.icpick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.icprev{width:44px;height:44px;border-radius:10px;border:1px dashed var(--line);display:grid;place-items:center;font-size:24px;overflow:hidden;flex:none}
+.icprev:empty::before{content:"＋";color:var(--grey);font-size:18px}
+.icprev img{width:100%;height:100%;object-fit:cover}
+.icprev.sm{display:inline-grid;width:28px;height:28px;font-size:17px;border-radius:7px;border:0;vertical-align:middle;margin-right:8px}
+.filebtn{position:relative;display:inline-flex;align-items:center;margin:0;cursor:pointer}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.filebtn:focus-within{outline:3px solid var(--red);outline-offset:2px}
 .stage .row{justify-content:center;margin-top:12px}
 .url{font:14px ui-monospace,monospace;color:var(--grey);text-align:center;margin-top:10px;overflow-wrap:anywhere}
 /* elegir dispositivo */
@@ -120,11 +139,16 @@ details.card li{margin:6px 0}
  body[data-view=view] .editor{display:none}
  body[data-view=view] .tabs{display:none}
  .stage{position:static}
- .phone{max-width:330px}
+ main.ed[data-dev]{grid-template-columns:minmax(0,1fr)}
  .qr{grid-template-columns:minmax(0,1fr)}
  .qr img{max-width:260px}
 }
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* un poco de vida en el panel */
+[data-pane]:not([hidden]){animation:entra .3s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+button:active,.btn:active{transform:scale(.97)}
+#list li{transition:background .2s,transform .2s}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media(max-width:860px){
  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
  .tabs button{flex:none}

@@ -9,22 +9,55 @@ body.pg{margin:0;min-height:100vh;background:var(--bg);background-attachment:fix
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 h1{margin:16px 0 4px;font:800 26px/1.15 system-ui,sans-serif;font-stretch:112%;text-wrap:balance;overflow-wrap:anywhere}
 .bio{margin:0 auto 6px;max-width:44ch;font-size:16px;opacity:.85;overflow-wrap:anywhere;white-space:pre-line}
-.soc{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 4px}
-.soc a{font:600 13px system-ui,sans-serif;color:var(--text);text-decoration:none;padding:6px 12px;border-radius:999px;
-  border:1.5px solid color-mix(in srgb,var(--text) 35%,transparent)}
-.soc a:hover{border-color:var(--acc)}
+.soc{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:18px 0 6px}
+.soc a{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;color:var(--text);text-decoration:none;
+  border:1.5px solid color-mix(in srgb,var(--text) 30%,transparent);transition:transform .2s cubic-bezier(.3,1.6,.5,1),background .2s,color .2s,border-color .2s}
+.soc a svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.soc a:hover{transform:translateY(-3px) scale(1.08);background:var(--acc);border-color:var(--acc);color:var(--solid)}
+.soc a:active{transform:scale(.92)}
 .links{margin-top:22px}
 .sec{font:700 14px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;margin:26px 0 4px;opacity:.75}
-.lk{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 14px;margin:12px 0;border-radius:var(--r);
-  background:var(--card);color:var(--ct);font:600 16px system-ui,sans-serif;text-decoration:none;border:2px solid transparent;
-  transition:transform .15s,border-color .15s;overflow-wrap:anywhere}
-.lk:hover{transform:translateY(-2px);border-color:var(--acc)}
+.lk{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;
+  padding:14px 18px;margin:12px 0;border-radius:var(--r);background:var(--card);color:var(--ct);font:600 16px system-ui,sans-serif;
+  text-decoration:none;border:2px solid transparent;overflow-wrap:anywhere;
+  transition:transform .25s cubic-bezier(.3,1.4,.5,1),border-color .2s,box-shadow .25s,background .2s;box-shadow:0 2px 0 #0000}
+.lk.wi{padding-left:66px;padding-right:66px}
+.lk .ic{position:absolute;left:8px;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:calc(var(--r) * .7);object-fit:cover}
+.lk .ic.em{display:grid;place-items:center;font-size:24px;line-height:1}
+.lk::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(105deg,transparent 35%,color-mix(in srgb,#fff 35%,transparent) 50%,transparent 65%);transform:translateX(-120%)}
+.lk:hover{transform:translateY(-3px) scale(1.015);border-color:var(--acc);box-shadow:0 12px 28px -12px color-mix(in srgb,var(--acc) 70%,#0000)}
+.lk:hover::after{transform:translateX(120%);transition:transform .7s ease}
+.lk:active{transform:scale(.97);transition-duration:.08s}
 .lk:focus-visible,.soc a:focus-visible,a:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
-.lk .em{font-size:20px;line-height:1}
 .lk.hi{border-color:var(--acc);animation:latir 2.4s ease-in-out infinite}
-@keyframes latir{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+@keyframes latir{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 55%,#0000)}50%{box-shadow:0 0 0 8px #0000}}
 .outline .lk{background:transparent;color:var(--text);border-color:var(--text)}
 .outline .lk:hover{border-color:var(--acc);color:var(--acc)}
+.glass .lk{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-color:#ffffff40}
+.glow .lk,.glow .soc a{border-color:var(--acc);box-shadow:0 0 12px -2px var(--acc),inset 0 0 10px -4px var(--acc)}
+.glow .lk:hover{box-shadow:0 0 26px 0 var(--acc),inset 0 0 14px -4px var(--acc);color:var(--acc)}
+.glow h1{text-shadow:0 0 18px var(--acc)}
+.av{box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 40%,transparent);transition:transform .3s}
+.av:hover{transform:scale(1.05) rotate(-2deg)}
+/* animación de entrada (sin JavaScript) */
+.anim-suave .av,.anim-suave .nm,.anim-suave .bio,.anim-suave .soc a,.anim-suave .lk,.anim-suave .sec,
+.anim-viva .av,.anim-viva .nm,.anim-viva .bio,.anim-viva .soc a,.anim-viva .lk,.anim-viva .sec{
+  animation:subir .55s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.12s + var(--i,0) * .06s)}
+.anim-suave .av,.anim-viva .av{--i:0;animation-name:aparecer}
+.anim-suave .nm,.anim-viva .nm{animation-delay:.08s}.anim-suave .bio,.anim-viva .bio{animation-delay:.14s}
+.anim-suave .soc a,.anim-viva .soc a{animation-delay:calc(.2s + var(--i,0) * .05s)}
+.anim-suave .lk.hi,.anim-viva .lk.hi{animation:subir .55s cubic-bezier(.2,.8,.3,1) backwards calc(.12s + var(--i,0) * .06s),latir 2.4s ease-in-out .9s infinite}
+.anim-viva .lk{animation-name:rebotar;animation-duration:.7s}
+@keyframes subir{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes aparecer{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes rebotar{0%{opacity:0;transform:translateY(30px) scale(.94)}60%{opacity:1;transform:translateY(-4px) scale(1.01)}100%{transform:none}}
+/* fondos con degradado: se mueven despacio */
+.grad.anim-suave,.grad.anim-viva{background-size:200% 200%;animation:fondo 18s ease-in-out infinite alternate}
+.grad.anim-viva{animation-duration:9s}
+@keyframes fondo{from{background-position:0% 30%}to{background-position:100% 70%}}
+.anim-viva .av{animation:aparecer .55s cubic-bezier(.3,1.6,.5,1) backwards,flotar 5s ease-in-out .6s infinite}
+@keyframes flotar{0%,100%{translate:0 0}50%{translate:0 -6px}}
 .none{opacity:.7}
 .foot{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;margin-top:40px;opacity:.85}
 .foot a,.legal-l a,.doc a{color:inherit}
@@ -32,4 +65,4 @@ h1{margin:16px 0 4px;font:800 26px/1.15 system-ui,sans-serif;font-stretch:112%;t
 .legal-l{font-size:12px;opacity:.7;margin:8px 0 0}
 .doc{text-align:left}.doc h1{margin-top:0}
 .draft{position:sticky;top:0;z-index:2;background:#e4002b;color:#fff;font:600 14px system-ui,sans-serif;padding:8px;text-align:center}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::after{transition:none!important;animation:none!important}}

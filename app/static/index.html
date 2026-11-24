@@ -81,8 +81,15 @@
      <input id="aTitle" placeholder="Mi canal de YouTube" maxlength="80">
      <label for="aUrl">Dirección</label>
      <input id="aUrl" placeholder="https://… · mailto:… · tel:…" inputmode="url" autocapitalize="off">
-     <label for="aEmoji">Emoji <span class="opt">(opcional)</span></label>
-     <input id="aEmoji" maxlength="8" placeholder="📸" style="max-width:120px">
+     <label>Icono del botón <span class="opt">(opcional)</span></label>
+     <div class="icpick">
+      <span class="icprev" id="aIcPrev" aria-hidden="true"></span>
+      <label class="btn ghost small filebtn">Subir foto o logo<input type="file" id="aImg" accept="image/png,image/jpeg,image/webp"></label>
+      <span class="hint">o un emoji</span>
+      <input id="aEmoji" maxlength="8" placeholder="📸" aria-label="Emoji" style="max-width:90px">
+      <button type="button" class="ghost small" id="aIcClear" hidden>Quitar</button>
+     </div>
+     <p class="hint">Sale a la izquierda del botón. La foto se recorta en cuadrado.</p>
      <div class="err" id="aErr" role="alert"></div>
      <div class="row"><button type="submit">Añadir enlace</button><button type="button" class="ghost" id="addHeader">Añadir título de sección</button></div>
     </form>
@@ -115,11 +122,16 @@
     </div>
     <h2>Botones</h2>
     <div class="chips" id="buttons"></div>
+    <h2>Animación</h2>
+    <div class="chips" id="anims"></div>
+    <p class="hint">Cómo aparecen los botones al abrir la página. Quien tenga activado «reducir movimiento» en su móvil la verá quieta.</p>
+    <h2>Iconos de redes</h2>
+    <div class="chips" id="socpos"></div>
    </div>
 
    <div data-pane="socials" hidden>
     <h2>Redes sociales</h2>
-    <p class="hint">Salen como botones pequeños debajo de tu bio.</p>
+    <p class="hint">Salen como iconos redondos (puedes elegir arriba o abajo en Diseño). Para WhatsApp pon tu número, para Telegram tu @usuario y para Correo tu email: al tocarlos se abre la app directamente.</p>
     <div id="socList"></div>
     <div class="row" style="margin-top:12px"><button type="button" class="ghost" id="socAdd">+ Añadir red</button><button type="button" id="socSave">Guardar redes</button></div>
     <div class="err" id="socErr" role="alert"></div>
@@ -223,7 +235,8 @@
   </section>
 
   <aside class="stage" aria-label="Vista previa">
-   <div class="phone"><iframe class="screen" id="screen" title="Vista previa de tu página"></iframe></div>
+   <div class="pvbox" id="pvBox"><div class="pvdev movil" id="pvDev"><iframe class="screen" id="screen" title="Vista previa de tu página"></iframe></div></div>
+   <p class="vsize" id="pvSize"></p>
    <p class="url" id="pageUrl"></p>
    <div class="row"><button type="button" class="ghost small" id="copyUrl">Copiar enlace</button><button type="button" class="ghost small" id="shareUrl" hidden>Compartir</button></div>
   </aside>

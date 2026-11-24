@@ -121,6 +121,37 @@ def clean_domain(raw) -> str:
     return d
 
 
+def social_url(net: str, raw) -> str:
+    """Convierte lo que escribe el usuario (número, @usuario, correo) en el enlace que abre la app."""
+    v = str(raw or "").strip()
+    if not re.match(r"^[a-z][a-z0-9+.-]*:", v, re.I) and not re.match(r"^(www\.)?[\w-]+\.[a-z]{2,}/", v, re.I):
+        if net == "whatsapp":
+            digits = re.sub(r"[^\d]", "", v)
+            if len(digits) == 9:          # número español sin prefijo
+                digits = "34" + digits
+            if not 8 <= len(digits) <= 15:
+                err(400, "Pon el número de WhatsApp con prefijo, por ejemplo +34 600 123 456")
+            return f"https://wa.me/{digits}"
+        if net == "telegram":
+            name = v.lstrip("@")
+            if not re.match(r"^[A-Za-z0-9_]{4,32}$", name):
+                err(400, "Pon tu usuario de Telegram, por ejemplo @tunombre")
+            return f"https://t.me/{name}"
+        if net == "email":
+            return clean_url("mailto:" + v)
+        if net == "phone":
+            return clean_url("tel:" + re.sub(r"[^\d+]", "", v))
+        handle = v.lstrip("@")
+        if re.match(r"^[A-Za-z0-9_.]{1,40}$", handle) and net in SOCIAL_HOSTS:
+            return SOCIAL_HOSTS[net].format(handle)
+    return clean_url(v)
+
+
+SOCIAL_HOSTS = {"instagram": "https://instagram.com/{}", "tiktok": "https://tiktok.com/@{}", "youtube": "https://youtube.com/@{}",
+                "x": "https://x.com/{}", "github": "https://github.com/{}", "twitch": "https://twitch.tv/{}",
+                "facebook": "https://facebook.com/{}", "linkedin": "https://linkedin.com/in/{}"}
+
+
 def clean_url(raw) -> str:
     u = str(raw or "").strip()
     if not u:
@@ -167,7 +198,8 @@ def page_json(p, base=""):
 
 def link_json(l):
     return {k: l[k] for k in ("id", "kind", "title", "url", "emoji", "start_at", "end_at")} | {
-        "enabled": bool(l["enabled"]), "highlight": bool(l["highlight"])}
+        "enabled": bool(l["enabled"]), "highlight": bool(l["highlight"]),
+        "image": f"/a/{l['image']}" if l["image"] else ""}
 
 
 # --- límite de intentos de entrada -----------------------------------------
@@ -199,7 +231,8 @@ def me(request: Request):
     no_users = db.q1("SELECT COUNT(*) n FROM users")["n"] == 0
     info = {"version": VERSION, "allow_register": registration_open() or no_users, "first_user": no_users,
             "max_pages": MAX_PAGES, "socials": page.SOCIALS,
-            "themes": {k: {"n": t["n"], "bg": t["bg"], "text": t["text"]} for k, t in page.THEMES.items()}}
+            "themes": {k: {"n": t["n"], "bg": t["bg"], "text": t["text"]} for k, t in page.THEMES.items()},
+            "anims": page.ANIMS}
     if not u:
         return info | {"user": None}
     return info | {"user": {"id": u["id"], "username": u["username"], "is_admin": bool(u["is_admin"])}}
@@ -377,12 +410,16 @@ async def update_page(page_id: int, request: Request):
         st = {k: v for k, v in d["style"].items() if k in page.COLOR_KEYS and isinstance(v, str) and HEX_RE.match(v)}
         if d["style"].get("button") in ("redondo", "pastilla", "recto", "borde"):
             st["button"] = d["style"]["button"]
+        if d["style"].get("soc") in ("arriba", "abajo"):
+            st["soc"] = d["style"]["soc"]
+        if d["style"].get("anim") in page.ANIMS:
+            st["anim"] = d["style"]["anim"]
         f["style"] = page.json_dumps(st)
     if "socials" in d and isinstance(d["socials"], list):
         socs = []
         for s in d["socials"][:20]:
             if isinstance(s, dict) and s.get("net") in page.SOCIALS and s.get("url"):
-                socs.append({"net": s["net"], "url": clean_url(s["url"])})
+                socs.append({"net": s["net"], "url": social_url(s["net"], s["url"])})
         f["socials"] = page.json_dumps(socs)
     if f:
         f["updated"] = time.time()
@@ -393,6 +430,8 @@ async def update_page(page_id: int, request: Request):
 def _delete_page(p):
     if p["avatar"]:
         (AVATARS / p["avatar"]).unlink(missing_ok=True)
+    for l in db.q("SELECT image FROM links WHERE page_id=? AND image<>''", p["id"]):
+        (AVATARS / l["image"]).unlink(missing_ok=True)
     db.run("DELETE FROM links WHERE page_id=?", p["id"])
     db.run("DELETE FROM stats WHERE page_id=?", p["id"])
     db.run("DELETE FROM pages WHERE id=?", p["id"])
@@ -407,24 +446,31 @@ def delete_page(page_id: int, request: Request):
 MAGIC = {b"\xff\xd8\xff": "jpg", b"\x89PNG\r\n\x1a\n": "png"}
 
 
+def read_image(d) -> tuple:
+    """Devuelve (bytes, extensión) de una imagen enviada en base64, o (b"", "") si viene vacía."""
+    data = str(d.get("data") or "")
+    if not data:
+        return b"", ""
+    try:
+        raw = base64.b64decode(data.split(",", 1)[-1], validate=True)
+    except ValueError:
+        err(400, "Imagen no válida")
+    if len(raw) > 1_500_000:
+        err(400, "La imagen es demasiado grande")
+    ext = next((e for m, e in MAGIC.items() if raw.startswith(m)), None)
+    if not ext:
+        ext = "webp" if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP" else None
+    if not ext:
+        err(400, "La imagen debe ser JPG, PNG o WebP")
+    return raw, ext
+
+
 @app.post("/api/pages/{page_id}/avatar")
 async def set_avatar(page_id: int, request: Request):
     p = own_page(user_or_401(request), page_id)
-    d = await request.json()
-    data = str(d.get("data") or "")
+    raw, ext = read_image(await request.json())
     new = ""
-    if data:
-        try:
-            raw = base64.b64decode(data.split(",", 1)[-1], validate=True)
-        except ValueError:
-            err(400, "Imagen no válida")
-        if len(raw) > 1_500_000:
-            err(400, "La imagen es demasiado grande")
-        ext = next((e for m, e in MAGIC.items() if raw.startswith(m)), None)
-        if not ext:
-            ext = "webp" if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP" else None
-        if not ext:
-            err(400, "La foto debe ser JPG, PNG o WebP")
+    if raw:
         new = f"{p['id']}-{secrets.token_hex(6)}.{ext}"
         (AVATARS / new).write_bytes(raw)
     if p["avatar"]:
@@ -491,9 +537,26 @@ async def update_link(link_id: int, request: Request):
     return link_json(db.q1("SELECT * FROM links WHERE id=?", link_id))
 
 
+@app.post("/api/links/{link_id}/image")
+async def set_link_image(link_id: int, request: Request):
+    """Foto o logo del botón (sustituye al emoji)."""
+    l = own_link(user_or_401(request), link_id)
+    raw, ext = read_image(await request.json())
+    new = ""
+    if raw:
+        new = f"l{l['id']}-{secrets.token_hex(6)}.{ext}"
+        (AVATARS / new).write_bytes(raw)
+    if l["image"]:
+        (AVATARS / l["image"]).unlink(missing_ok=True)
+    db.run("UPDATE links SET image=?, emoji=CASE WHEN ?<>'' THEN '' ELSE emoji END WHERE id=?", new, new, link_id)
+    return link_json(db.q1("SELECT * FROM links WHERE id=?", link_id))
+
+
 @app.delete("/api/links/{link_id}")
 def delete_link(link_id: int, request: Request):
-    own_link(user_or_401(request), link_id)
+    l = own_link(user_or_401(request), link_id)
+    if l["image"]:
+        (AVATARS / l["image"]).unlink(missing_ok=True)
     db.run("DELETE FROM links WHERE id=?", link_id)
     db.run("DELETE FROM stats WHERE link_id=?", link_id)
     return {"ok": True}
@@ -627,7 +690,7 @@ def privacy():
 
 @app.get("/a/{name}")
 def avatar(name: str):
-    if not re.match(r"^\d+-[0-9a-f]{12}\.(jpg|png|webp)$", name) or not (AVATARS / name).is_file():
+    if not re.match(r"^l?\d+-[0-9a-f]{12}\.(jpg|png|webp)$", name) or not (AVATARS / name).is_file():
         err(404, "No encontrado")
     return FileResponse(AVATARS / name, headers={"Cache-Control": "public, max-age=31536000, immutable"})
 

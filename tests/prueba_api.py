@@ -67,4 +67,19 @@ with TestClient(app) as c:
     assert s["public_url"]=="https://enlaces.midominio.com" and s["allow_register"] is False, s
     assert ok(c.get(f"/api/pages/{p['id']}")).json()["url"]=="https://enlaces.midominio.com/david"
     ok(TestClient(app).post("/api/register", headers=H, json={"username":"otro","password":"12345678","accept":1}), 403)
+    # icono de imagen en un enlace, redes con iconos y animación
+    import base64 as B
+    png="data:image/png;base64,"+B.b64encode(b"\x89PNG\r\n\x1a\n"+b"0"*40).decode()
+    lk=ok(c3.post(f"/api/pages/{ap['id']}/links", headers=H, json={"title":"Tienda","url":"tienda.es"})).json()
+    ok(c3.post(f"/api/links/{lk['id']}/image", headers=H, json={"data":"data:image/gif;base64,R0lGODlh"}), 400)
+    lk=ok(c3.post(f"/api/links/{lk['id']}/image", headers=H, json={"data":png})).json(); assert lk["image"].startswith("/a/l"), lk
+    ok(TestClient(app).get(lk["image"]))
+    ok(c2.post(f"/api/links/{lk['id']}/image", headers=H, json={"data":png}), 401)
+    sp=ok(c3.put(f"/api/pages/{ap['id']}", headers=H, json={"published":True,"style":{"anim":"viva","soc":"arriba"},"socials":[
+        {"net":"whatsapp","url":"600 123 456"},{"net":"telegram","url":"@pepeluis"},{"net":"email","url":"pepe@pepe.es"},{"net":"instagram","url":"@pepe"}]})).json()
+    assert [x["url"] for x in sp["socials"]]==["https://wa.me/34600123456","https://t.me/pepeluis","mailto:pepe@pepe.es","https://instagram.com/pepe"], sp["socials"]
+    ok(c3.put(f"/api/pages/{ap['id']}", headers=H, json={"socials":[{"net":"telegram","url":"@a"}]}), 400)
+    html_=ok(TestClient(app).get("/pepe-luis")).text
+    assert 'class="ic"' in html_ and "anim-viva" in html_ and "<svg viewBox" in html_ and "wa.me" in html_, html_[-1500:]
+    ok(c3.delete(f"/api/links/{lk['id']}", headers=H)); ok(TestClient(app).get(lk["image"]), 404)
     print("TODO OK", r.headers.get("content-security-policy") is not None)

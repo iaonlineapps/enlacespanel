@@ -15,16 +15,21 @@ quien visita tu página.
 
 - **Tu página pública** en `http://tu-servidor/tu-nombre`, con foto, nombre, bio, redes
   sociales y tus enlaces. Se genera en el servidor: carga al instante incluso en móviles viejos.
-- **Editor con vista previa en directo** dentro de un móvil, y botón **Ver mi página** para verla
-  como en un **móvil, una tablet o un PC**.
+- **Editor con vista previa en directo**: elige **Móvil, Tablet o PC** en la cabecera y la vista
+  previa cambia de tamaño mientras editas. El botón **Ver mi página** la abre a pantalla completa.
 - **Tu dominio:** pon la dirección pública del servidor (`https://enlaces.midominio.com/laura`)
   o un **dominio propio para cada página** (`https://laura.com`). El enlace, el botón Compartir
   y el QR usan tu dominio.
-- **Enlaces** con emoji, **títulos de sección**, ordenar arrastrando (o con ↑ ↓), ocultar sin
-  borrar, **destacar** uno para que llame la atención y **programarlos** (que aparezcan o
-  desaparezcan solos en una fecha, perfecto para ofertas o eventos).
-- **Diseño:** 8 temas (Noche, Papel, Bosque, Atardecer, Arena, Mar, Lavanda y Carbón), un
-  tema **Propio** con tus colores y 4 estilos de botón.
+- **Enlaces** con **foto o logo** (o un emoji) a la izquierda del botón, **títulos de sección**, ordenar arrastrando (o con ↑ ↓), ocultar sin
+  borrar, **destacar** uno para que llame la atención y **programarlos** con un interruptor (que
+  aparezcan o caduquen solos en una fecha, perfecto para ofertas o eventos; apagado, no caducan).
+- **Redes con iconos** al final de la página (o debajo de la bio): WhatsApp, Telegram, correo,
+  teléfono, Instagram, TikTok, YouTube… Solo escribes tu número, @usuario o email y al tocarlos se
+  abre la app directamente.
+- **Diseño animado:** 10 temas (Noche, Papel, Bosque, Atardecer, Arena, Mar, Lavanda, Aurora,
+  Neón y Carbón), un tema **Propio** con tus colores, 4 estilos de botón y animación **Suave**,
+  **Viva** o ninguna: los botones entran uno a uno, brillan al pasar el ratón y se hunden al
+  pulsarlos, y los fondos con degradado se mueven despacio. Todo con CSS, sin JavaScript.
 - **Estadísticas sin cookies:** visitas y clics por día y por enlace, de 7 días a 1 año.
 - **Código QR** de tu página, con tus colores, para descargar en PNG o SVG e imprimir.
 - **Varias páginas por usuario** (personal, negocio…) y **varios usuarios**, con registro
@@ -267,10 +272,11 @@ Si quieres usarlo con fines comerciales, escribe al autor por GitHub.
 | [Segno](https://github.com/heuer/segno) | Genera los códigos QR | BSD-3-Clause |
 | [Python](https://www.python.org/) (imagen Docker `python:3.13-slim`) | Lenguaje | PSF |
 
-No usa fuentes, iconos ni imágenes de terceros: el logo y el diseño son propios.
+No usa fuentes, iconos ni imágenes de terceros: el logo, los iconos de redes y el diseño son
+propios (los iconos son dibujos sencillos hechos para EnlacesPanel, no los logotipos oficiales).
 
 **Marcas:** EnlacesPanel no tiene relación con Linktree ni con ninguna red social. Los nombres de las
-redes (Instagram, YouTube…) se usan solo como texto para indicar a dónde lleva cada enlace, y
+redes (Instagram, YouTube…) se usan solo para indicar a dónde lleva cada enlace, y
 pertenecen a sus dueños.
 
 Copyright (c) 2026 [pctecnikk](https://github.com/pctecnikk)

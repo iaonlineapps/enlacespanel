@@ -144,16 +144,47 @@ const fmtDate = t => t ? new Date(t * 1000).toLocaleString('es-ES', {dateStyle: 
 const toLocalInput = t => { if (!t) return ''; const d = new Date(t * 1000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 const fromLocalInput = v => v ? Math.round(new Date(v).getTime() / 1000) : null;
 let editing = null;
+const icon = l => l.image ? `<img src="${esc(l.image)}" alt="">` : (l.emoji ? esc(l.emoji) : '');
+// Recorta la foto en cuadrado y la reduce antes de subirla
+function squareImage(file, S) {
+  return new Promise((ok, ko) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = c.height = S;
+      const k = Math.max(S / img.width, S / img.height), w = img.width * k, h = img.height * k;
+      c.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+      URL.revokeObjectURL(img.src);
+      let d = c.toDataURL('image/webp', .9);
+      if (!d.startsWith('data:image/webp')) d = c.toDataURL('image/png');
+      ok(d);
+    };
+    img.onerror = () => ko(new Error('Esa imagen no se puede leer'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+let addImg = null;
+$('aImg').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { addImg = await squareImage(f, 160); $('aIcPrev').innerHTML = `<img src="${addImg}" alt="">`; $('aEmoji').value = ''; $('aIcClear').hidden = false; }
+  catch (err) { toast(err.message); }
+};
+$('aEmoji').oninput = e => { if (e.target.value) { addImg = null; $('aImg').value = ''; } $('aIcPrev').textContent = e.target.value; $('aIcClear').hidden = !e.target.value; };
+$('aIcClear').onclick = () => { addImg = null; $('aImg').value = ''; $('aEmoji').value = ''; $('aIcPrev').textContent = ''; $('aIcClear').hidden = true; };
 function renderList() {
   const now = Date.now() / 1000;
   $('list').innerHTML = links.length ? links.map((l, i) => {
     if (editing === l.id) return `<li class="edit" data-id="${l.id}">
       <label>Título</label><input id="eT" value="${esc(l.title)}" maxlength="80">
       ${l.kind === 'link' ? `<label>Dirección</label><input id="eU" value="${esc(l.url)}" autocapitalize="off">
-      <label>Emoji <span class="opt">(opcional)</span></label><input id="eE" value="${esc(l.emoji)}" maxlength="8" style="max-width:120px">
+      <label>Icono del botón <span class="opt">(opcional)</span></label>
+      <div class="icpick"><span class="icprev" id="eIcPrev" aria-hidden="true">${icon(l)}</span>
+       <label class="btn ghost small filebtn">${l.image ? 'Cambiar foto o logo' : 'Subir foto o logo'}<input type="file" id="eImg" accept="image/png,image/jpeg,image/webp"></label>
+       <span class="hint">o un emoji</span><input id="eE" value="${l.image ? '' : esc(l.emoji)}" maxlength="8" aria-label="Emoji" style="max-width:90px">
+       <button type="button" class="ghost small" data-a="noimg" ${l.image || l.emoji ? '' : 'hidden'}>Quitar icono</button></div>
       <label class="inline"><input type="checkbox" id="eH" ${l.highlight ? 'checked' : ''}> Destacar (late suavemente para llamar la atención)</label>
-      <div class="row"><label style="flex:1">Se muestra desde <span class="opt">(opcional)</span><input type="datetime-local" id="eS" value="${toLocalInput(l.start_at)}"></label>
-      <label style="flex:1">Hasta <span class="opt">(opcional)</span><input type="datetime-local" id="eX" value="${toLocalInput(l.end_at)}"></label></div>` : ''}
+      <label class="inline sw"><input type="checkbox" id="eP" ${l.start_at || l.end_at ? 'checked' : ''}> <span>Programar fechas <span class="opt">(si lo dejas apagado, el enlace se ve siempre y no caduca)</span></span></label>
+      <div class="row" id="eDates" ${l.start_at || l.end_at ? '' : 'hidden'}><label style="flex:1">Se muestra desde <span class="opt">(vacío = ya)</span><input type="datetime-local" id="eS" value="${toLocalInput(l.start_at)}"></label>
+      <label style="flex:1">Caduca el <span class="opt">(vacío = nunca)</span><input type="datetime-local" id="eX" value="${toLocalInput(l.end_at)}"></label></div>` : ''}
       <div class="err" id="eErr"></div>
       <div class="row"><button data-a="ok">Guardar</button><button class="ghost" data-a="cancel">Cancelar</button></div></li>`;
     const sched = (l.start_at && l.start_at > now) ? `<span class="tag">desde ${fmtDate(l.start_at)}</span>`
@@ -161,7 +192,7 @@ function renderList() {
       : l.end_at ? `<span class="tag">hasta ${fmtDate(l.end_at)}</span>` : '';
     return `<li draggable="true" data-id="${l.id}" class="${l.enabled ? '' : 'off'} ${l.kind === 'header' ? 'hdr' : ''}">
       <span class="grip" title="Arrastra para ordenar" aria-hidden="true">⠿</span>
-      <div><div class="t">${l.emoji ? esc(l.emoji) + ' ' : ''}${esc(l.title)}${l.highlight ? '<span class="tag">destacado</span>' : ''}${sched}</div>
+      <div><div class="t">${l.kind === 'link' && icon(l) ? `<span class="icprev sm" aria-hidden="true">${icon(l)}</span>` : ''}${esc(l.title)}${l.highlight ? '<span class="tag">destacado</span>' : ''}${sched}</div>
       <div class="u">${l.kind === 'header' ? 'Título de sección' : esc(l.url)}</div></div>
       <div class="c">${l.kind === 'link' ? `${clicks[l.id] || 0}<small>clics</small>` : ''}</div>
       <div class="acts">
@@ -176,8 +207,9 @@ function renderList() {
 $('addForm').onsubmit = async e => {
   e.preventDefault();
   try {
-    const l = await api(`/api/pages/${P.id}/links`, {method: 'POST', body: {title: $('aTitle').value, url: $('aUrl').value, emoji: $('aEmoji').value}});
-    links.push(l); $('aTitle').value = $('aUrl').value = $('aEmoji').value = ''; $('aErr').textContent = '';
+    let l = await api(`/api/pages/${P.id}/links`, {method: 'POST', body: {title: $('aTitle').value, url: $('aUrl').value, emoji: addImg ? '' : $('aEmoji').value}});
+    if (addImg) { try { l = await api(`/api/links/${l.id}/image`, {method: 'POST', body: {data: addImg}}); } catch (err) { toast(err.message); } }
+    links.push(l); $('aTitle').value = $('aUrl').value = ''; $('aIcClear').onclick(); $('aErr').textContent = '';
     renderList(); refreshPreview(); toast('Enlace añadido');
   } catch (err) { $('aErr').textContent = err.message; }
 };
@@ -200,10 +232,15 @@ $('list').onclick = async e => {
     if (a === 'edit') { editing = id; renderList(); $('eT').focus(); return; }
     if (a === 'cancel') { editing = null; return renderList(); }
     if (a === 'toggle') { links[i] = await api('/api/links/' + id, {method: 'PUT', body: {enabled: !l.enabled}}); renderList(); refreshPreview(); return; }
+    if (a === 'noimg') {
+      if (l.image) links[i] = await api(`/api/links/${id}/image`, {method: 'POST', body: {data: ''}});
+      $('eE').value = ''; links[i].emoji = ''; $('eIcPrev').textContent = ''; b.hidden = true; refreshPreview(); return;
+    }
     if (a === 'ok') {
-      const body = {title: $('eT').value};
+      const body = {title: $('eT').value}, prog = $('eP') && $('eP').checked;
       if (l.kind === 'link') Object.assign(body, {url: $('eU').value, emoji: $('eE').value, highlight: $('eH').checked,
-        start_at: fromLocalInput($('eS').value), end_at: fromLocalInput($('eX').value)});
+        start_at: prog ? fromLocalInput($('eS').value) : null, end_at: prog ? fromLocalInput($('eX').value) : null});
+      if (body.emoji && l.image) await api(`/api/links/${id}/image`, {method: 'POST', body: {data: ''}});
       try { links[i] = await api('/api/links/' + id, {method: 'PUT', body}); }
       catch (err) { $('eErr').textContent = err.message; return; }
       editing = null; renderList(); refreshPreview(); toast('Guardado'); return;
@@ -212,6 +249,18 @@ $('list').onclick = async e => {
       await api('/api/links/' + id, {method: 'DELETE'});
       lastDeleted = {l, i}; links.splice(i, 1); renderList(); refreshPreview(); toast('Enlace borrado', true);
     }
+  } catch (err) { toast(err.message); }
+};
+$('list').onchange = async e => {
+  if (e.target.id === 'eP') { $('eDates').hidden = !e.target.checked; return; }
+  if (e.target.id !== 'eImg' || !e.target.files[0]) return;
+  const id = Number(e.target.closest('li').dataset.id), i = links.findIndex(l => l.id === id);
+  try {
+    const data = await squareImage(e.target.files[0], 160);
+    links[i] = await api(`/api/links/${id}/image`, {method: 'POST', body: {data}});
+    $('eIcPrev').innerHTML = icon(links[i]); $('eE').value = '';
+    const nb = e.target.closest('li').querySelector('[data-a=noimg]'); if (nb) nb.hidden = false;
+    refreshPreview(); toast('Imagen puesta');
   } catch (err) { toast(err.message); }
 };
 $('undo').onclick = async () => {
@@ -237,19 +286,12 @@ const debounceSave = (fields) => { clearTimeout(saveT); saveT = setTimeout(() =>
 $('fName').oninput = e => debounceSave({name: e.target.value});
 $('fBio').oninput = e => { $('bioCount').textContent = e.target.value.length; debounceSave({bio: e.target.value}); };
 $('fLegal').oninput = e => debounceSave({legal: e.target.value});
-$('fFoto').onchange = e => {
+$('fFoto').onchange = async e => {
   const file = e.target.files[0]; if (!file) return;
-  const img = new Image();
-  img.onload = async () => {
-    const S = 400, c = document.createElement('canvas'); c.width = c.height = S;
-    const k = Math.max(S / img.width, S / img.height), w = img.width * k, h = img.height * k;
-    c.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
-    URL.revokeObjectURL(img.src);
-    try { const r = await api(`/api/pages/${P.id}/avatar`, {method: 'POST', body: {data: c.toDataURL('image/jpeg', .85)}}); P.avatar = r.avatar; refreshPreview(true); toast('Foto actualizada'); }
-    catch (err) { toast(err.message); }
-  };
-  img.onerror = () => toast('Esa imagen no se puede leer');
-  img.src = URL.createObjectURL(file);
+  try {
+    const data = await squareImage(file, 400);
+    const r = await api(`/api/pages/${P.id}/avatar`, {method: 'POST', body: {data}}); P.avatar = r.avatar; refreshPreview(true); toast('Foto actualizada');
+  } catch (err) { toast(err.message); }
 };
 $('noFoto').onclick = async () => { await api(`/api/pages/${P.id}/avatar`, {method: 'POST', body: {data: ''}}); $('fFoto').value = ''; refreshPreview(true); toast('Foto quitada'); };
 
@@ -271,7 +313,13 @@ function renderThemes() {
     `<label><input type="color" data-c="${k}" value="${esc(st[k] || def[k])}"> ${n}</label>`).join('');
   $('buttons').innerHTML = Object.entries(BUTTONS).map(([k, n]) =>
     `<button class="${(st.button || 'redondo') === k ? 'on' : 'ghost'} small" data-b="${k}">${n}</button>`).join('');
+  $('anims').innerHTML = Object.entries(info.anims).map(([k, n]) =>
+    `<button class="${(st.anim || 'suave') === k ? 'on' : 'ghost'} small" data-an="${k}">${n}</button>`).join('');
+  $('socpos').innerHTML = [['arriba', 'Debajo de la bio'], ['abajo', 'Al final de la página']].map(([k, n]) =>
+    `<button class="${(st.soc || 'abajo') === k ? 'on' : 'ghost'} small" data-sp="${k}">${n}</button>`).join('');
 }
+$('anims').onclick = async e => { const b = e.target.closest('[data-an]'); if (!b) return; if (await savePage({style: {...(P.style || {}), anim: b.dataset.an}})) renderThemes(); };
+$('socpos').onclick = async e => { const b = e.target.closest('[data-sp]'); if (!b) return; if (await savePage({style: {...(P.style || {}), soc: b.dataset.sp}})) renderThemes(); };
 $('themes').onclick = async e => { const b = e.target.closest('[data-th]'); if (!b) return; if (await savePage({theme: b.dataset.th})) renderThemes(); };
 $('colors').oninput = e => {
   const c = e.target.dataset.c; if (!c) return;
@@ -282,6 +330,8 @@ $('buttons').onclick = async e => { const b = e.target.closest('[data-b]'); if (
 
 // ---------- redes ----------
 let socials = [];
+const SOC_PH = {whatsapp: 'Tu número: +34 600 123 456', telegram: 'Tu usuario: @tunombre', email: 'tu@correo.es', phone: '+34 600 123 456',
+  instagram: '@tunombre o https://…', tiktok: '@tunombre o https://…', youtube: '@tucanal o https://…', x: '@tunombre o https://…'};
 function renderSocials() {
   socials = (P.socials || []).map(s => ({...s}));
   drawSocials();
@@ -290,11 +340,11 @@ function drawSocials() {
   const opts = Object.entries(info.socials);
   $('socList').innerHTML = socials.length ? socials.map((s, i) => `<div class="row" style="margin:8px 0" data-i="${i}">
     <select data-k="net" aria-label="Red" style="max-width:150px;flex:none">${opts.map(([k, n]) => `<option value="${k}" ${k === s.net ? 'selected' : ''}>${n}</option>`).join('')}</select>
-    <input data-k="url" value="${esc(s.url)}" placeholder="https://…" autocapitalize="off" aria-label="Dirección">
+    <input data-k="url" value="${esc(s.url)}" placeholder="${SOC_PH[s.net] || 'https://…'}" autocapitalize="off" aria-label="Dirección">
     <button type="button" class="ghost small" data-del="${i}" aria-label="Quitar">✕</button></div>`).join('')
     : '<p class="empty">Aún no has puesto redes.</p>';
 }
-$('socList').oninput = e => { const row = e.target.closest('[data-i]'); if (row) socials[row.dataset.i][e.target.dataset.k] = e.target.value; };
+$('socList').oninput = e => { const row = e.target.closest('[data-i]'); if (!row) return; socials[row.dataset.i][e.target.dataset.k] = e.target.value; if (e.target.dataset.k === 'net') drawSocials(); };
 $('socList').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { socials.splice(Number(b.dataset.del), 1); drawSocials(); } };
 $('socAdd').onclick = () => { socials.push({net: 'instagram', url: ''}); drawSocials(); };
 $('socSave').onclick = async () => {
@@ -417,7 +467,22 @@ function fitViewer() {
   d.style.transform = `translate(-50%, -50%) scale(${k})`;
   $('vSize').textContent = label + (k < 1 ? ` · al ${Math.round(k * 100)} %` : '');
 }
-function setDevice(dv) { device = dv; localStorage.setItem('enlacespanel-dev', dv); markDevice(); fitViewer(); }
+// La vista previa de al lado del editor también cambia de tamaño
+function fitPreview() {
+  const [w, h, label] = DEVICES[device], d = $('pvDev'), box = $('pvBox');
+  const pad = device === 'pc' ? [16, 36] : [20, 20], W = w + pad[0], H = h + pad[1];
+  const maxH = Math.max(320, innerHeight - 190);
+  const k = Math.min(1, box.clientWidth / W, maxH / H);
+  d.className = 'pvdev ' + device;
+  d.style.width = W + 'px'; d.style.height = H + 'px';
+  d.style.transform = `translateX(${(box.clientWidth - W * k) / 2}px) scale(${k})`;
+  box.style.height = Math.round(H * k) + 'px';
+  $('pvSize').textContent = label;
+}
+function setDevice(dv) {
+  device = dv; localStorage.setItem('enlacespanel-dev', dv); markDevice();
+  $('editor').dataset.dev = dv; fitPreview(); fitViewer();
+}
 document.querySelectorAll('[data-dev]').forEach(b => b.onclick = () => setDevice(b.dataset.dev));
 $('openPage').onclick = () => {
   $('vFrame').src = '/' + P.slug + '?vista=1&t=' + Date.now();
@@ -425,7 +490,9 @@ $('openPage').onclick = () => {
   $('viewer').hidden = false; fitViewer();
 };
 $('vClose').onclick = () => { $('viewer').hidden = true; $('vFrame').src = 'about:blank'; };
-addEventListener('resize', fitViewer);
+addEventListener('resize', () => { fitViewer(); fitPreview(); });
+new ResizeObserver(() => fitPreview()).observe($('pvBox'));
+$('editor').dataset.dev = device;
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('viewer').hidden) $('vClose').onclick(); });
 markDevice();
 
