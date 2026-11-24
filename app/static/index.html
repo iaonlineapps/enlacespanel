@@ -39,6 +39,7 @@
    <button type="button" data-dev="pc" title="Ver como en un ordenador">PC</button>
   </div>
   <button type="button" class="ghost" id="openPage">Ver mi página</button>
+  <button type="button" class="vchip" id="vChip" title="Ver novedades"></button>
   <button class="ghost" id="logout">Salir</button>
  </header>
  <nav class="tabs" id="tabs" aria-label="Secciones">
@@ -224,10 +225,32 @@
     <h3>Borrar cuenta</h3>
     <p class="hint">Se borran tu cuenta, tus páginas, tus fotos y tus estadísticas. No se puede deshacer.</p>
     <button type="button" class="danger" id="delAccount">Borrar mi cuenta</button>
+    <h3>Acerca de</h3>
+    <p id="verLine"></p>
+    <div class="row">
+     <button type="button" class="ghost" id="newsBtn">Novedades de la web</button>
+     <button type="button" class="ghost" id="appNewsBtn" hidden>Novedades de la app</button>
+     <button type="button" class="ghost" id="appCheckBtn" hidden>Buscar versión nueva de la app</button>
+    </div>
+    <p class="hint" id="appHint">Para actualizar el servidor: <code>git pull && ./install.sh</code> en la carpeta de EnlacesPanel.</p>
     <p class="ver">EnlacesPanel <span id="ver"></span> · <a href="/privacidad" target="_blank">Privacidad</a></p>
    </div>
 
    <div data-pane="users" hidden>
+    <h2>Crear usuario</h2>
+    <form id="nuForm" autocomplete="off">
+     <div class="row">
+      <label style="flex:1">Usuario<input id="nuName" autocapitalize="off" maxlength="32" required></label>
+      <label style="flex:1">Contraseña<input id="nuPass" autocomplete="new-password" minlength="8" required></label>
+     </div>
+     <div class="row" style="align-items:center">
+      <button type="button" class="ghost small" id="nuGen">Generar contraseña</button>
+      <label class="inline" style="margin:0"><input type="checkbox" id="nuAdmin"> Administrador</label>
+     </div>
+     <div class="err" id="nuErr" role="alert"></div>
+     <div class="row"><button type="submit">Crear usuario</button></div>
+     <p class="hint">La cuenta queda activa al momento. Pásale el usuario y la contraseña a esa persona; puede cambiarla en Cuenta.</p>
+    </form>
     <h2>Usuarios</h2>
     <table><thead><tr><th>Usuario</th><th>Estado</th><th class="n">Páginas</th><th></th></tr></thead><tbody id="uList"></tbody></table>
    </div>
@@ -257,6 +280,12 @@
  <div class="vstage" id="vStage"><div class="vdev" id="vDev"><iframe id="vFrame" title="Tu página"></iframe></div></div>
  <p class="vsize" id="vSize"></p>
 </div>
+
+<dialog class="news" id="news" aria-labelledby="newsTitle">
+ <h2 id="newsTitle">Novedades</h2>
+ <div id="newsBody"></div>
+ <div class="row"><button type="button" id="newsClose">Entendido</button></div>
+</dialog>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" hidden>Deshacer</button></div>
 

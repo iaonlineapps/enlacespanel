@@ -32,8 +32,11 @@ quien visita tu página.
   pulsarlos, y los fondos con degradado se mueven despacio. Todo con CSS, sin JavaScript.
 - **Estadísticas sin cookies:** visitas y clics por día y por enlace, de 7 días a 1 año.
 - **Código QR** de tu página, con tus colores, para descargar en PNG o SVG e imprimir.
-- **Varias páginas por usuario** (personal, negocio…) y **varios usuarios**, con registro
-  aprobado por el administrador.
+- **Varias páginas por usuario** (personal, negocio…) y **varios usuarios**: el administrador
+  los crea desde el panel (con contraseña generada si quiere) o aprueba los que se registran.
+- **Novedades a la vista:** tras actualizar, el panel (en el navegador y en la app) enseña una
+  vez qué ha cambiado. La versión de la web y de la app sale en Cuenta → Acerca de, y la lista
+  completa está en [`app/NOVEDADES.md`](app/NOVEDADES.md).
 - **Aviso legal** propio en cada página y **política de privacidad** ya hecha (RGPD).
 - **Tus datos son tuyos:** descárgalos en un archivo o borra tu cuenta cuando quieras.
 - **App para Android** que se conecta a tu servidor por tu dominio o por la wifi de casa, y en

@@ -605,6 +605,23 @@ def admin_users(request: Request):
                           "FROM users u ORDER BY u.status='approved', u.id")]
 
 
+@app.post("/api/admin/users")
+async def admin_create_user(request: Request):
+    """El administrador crea una cuenta ya aprobada (con su contraseña)."""
+    admin_or_403(request)
+    d = await request.json()
+    name, pw = text(d.get("username"), 64), str(d.get("password") or "")
+    if not USER_RE.match(name):
+        err(400, "El usuario debe tener de 3 a 32 letras, números, puntos, guiones o _")
+    if len(pw) < 8:
+        err(400, "La contraseña debe tener al menos 8 caracteres")
+    if db.q1("SELECT 1 FROM users WHERE username=?", name):
+        err(409, "Ese usuario ya existe")
+    db.run("INSERT INTO users(username,pw_hash,is_admin,status,created) VALUES(?,?,?,'approved',?)",
+           name, db.hash_pw(pw), int(bool(d.get("is_admin"))), time.time())
+    return {"ok": True}
+
+
 @app.post("/api/admin/users/{user_id}")
 async def admin_user(user_id: int, request: Request):
     me_ = admin_or_403(request)
@@ -623,9 +640,31 @@ async def admin_user(user_id: int, request: Request):
         db.run("UPDATE users SET is_admin=? WHERE id=?", int(action == "admin"), user_id)
     elif action == "delete":
         _delete_user_data(user_id)
+    elif action == "password":
+        pw = str(d.get("password") or "")
+        if len(pw) < 8:
+            err(400, "La contraseña debe tener al menos 8 caracteres")
+        db.run("UPDATE users SET pw_hash=? WHERE id=?", db.hash_pw(pw), user_id)
+        db.run("DELETE FROM sessions WHERE user_id=?", user_id)
     else:
         err(400, "Acción desconocida")
     return {"ok": True}
+
+
+@app.get("/api/novedades")
+def novedades(request: Request):
+    """Lista de cambios de la web (app/NOVEDADES.md), para el aviso tras actualizar."""
+    user_or_401(request)
+    out, cur = [], None
+    for line in (Path(__file__).parent / "NOVEDADES.md").read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            cur = {"version": line[3:].strip(), "items": []}
+            out.append(cur)
+        elif cur is not None and line.startswith("- "):
+            cur["items"].append(line[2:].strip())
+        elif cur is not None and line.startswith("  ") and cur["items"]:
+            cur["items"][-1] += " " + line.strip()
+    return {"version": VERSION, "novedades": out}
 
 
 @app.get("/api/admin/settings")

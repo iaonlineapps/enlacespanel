@@ -79,6 +79,7 @@ async function start() {
     pages.push(await api('/api/pages', {method: 'POST', body: {auto: true}}));
     toast('Tu página ya está creada. Empieza añadiendo enlaces.');
   }
+  paintVersions(); newsIfUpdated();
   const want = Number(localStorage.getItem('enlacespanel-page'));
   await openPage((pages.find(p => p.id === want) || pages[0]).id);
 }
@@ -440,14 +441,30 @@ async function loadUsers() {
     <td>${STATUS[u.status] || u.status}</td><td class="n">${u.pages}</td><td><div class="row" style="justify-content:flex-end">
     ${u.status !== 'approved' ? '<button class="small" data-a="approve">Aprobar</button>' : ''}
     ${u.id !== me.id ? `${u.status === 'approved' ? '<button class="ghost small" data-a="disable">Desactivar</button>' : ''}
+      <button class="ghost small" data-a="password">Cambiar contraseña</button>
       <button class="ghost small" data-a="${u.is_admin ? 'unadmin' : 'admin'}">${u.is_admin ? 'Quitar admin' : 'Hacer admin'}</button>
       <button class="danger small" data-a="delete">Borrar</button>` : ''}</div></td></tr>`).join('');
 }
+const genPass = () => { const c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = crypto.getRandomValues(new Uint32Array(12)); return Array.from(r, n => c[n % c.length]).join(''); };
+$('nuGen').onclick = () => { $('nuPass').value = genPass(); $('nuPass').type = 'text'; };
+$('nuForm').onsubmit = async e => {
+  e.preventDefault(); $('nuErr').textContent = '';
+  const username = $('nuName').value.trim(), password = $('nuPass').value;
+  try {
+    await api('/api/admin/users', {method: 'POST', body: {username, password, is_admin: $('nuAdmin').checked}});
+    $('nuName').value = $('nuPass').value = ''; $('nuAdmin').checked = false; loadUsers();
+    toast(`Usuario ${username} creado`);
+  } catch (err) { $('nuErr').textContent = err.message; }
+};
 $('uList').onclick = async e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
-  const id = b.closest('tr').dataset.id, a = b.dataset.a;
+  const id = b.closest('tr').dataset.id, a = b.dataset.a, body = {action: a};
   if (a === 'delete' && !confirm('¿Borrar este usuario y todas sus páginas?')) return;
-  try { await api('/api/admin/users/' + id, {method: 'POST', body: {action: a}}); loadUsers(); toast('Hecho'); }
+  if (a === 'password') {
+    const pw = prompt('Nueva contraseña para este usuario (mínimo 8 caracteres):', genPass());
+    if (!pw) return; body.password = pw;
+  }
+  try { await api('/api/admin/users/' + id, {method: 'POST', body}); loadUsers(); toast(a === 'password' ? 'Contraseña cambiada' : 'Hecho'); }
   catch (err) { toast(err.message); }
 };
 
@@ -495,6 +512,38 @@ new ResizeObserver(() => fitPreview()).observe($('pvBox'));
 $('editor').dataset.dev = device;
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('viewer').hidden) $('vClose').onclick(); });
 markDevice();
+
+// ---------- versiones y novedades ----------
+const appVer = () => { try { return AND && AND.version ? AND.version() : ''; } catch (e) { return ''; } };
+const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+const newer = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+function paintVersions() {
+  const av = appVer();
+  $('vChip').textContent = 'v' + info.version;
+  $('verLine').innerHTML = `<b>Web ${esc(info.version)}</b>` + (av ? ` · <b>App ${esc(av)}</b>`
+    : ' · <a href="https://github.com/pctecnikk/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App de Android</a>');
+  $('appNewsBtn').hidden = !(AND && AND.news); $('appCheckBtn').hidden = !(AND && AND.checkUpdate);
+}
+async function showNews(since) {
+  const d = await api('/api/novedades');
+  const list = since ? d.novedades.filter(n => newer(n.version, since)) : d.novedades;
+  if (!list.length) return;
+  $('newsTitle').textContent = since ? `EnlacesPanel se ha actualizado a la ${d.version}` : 'Novedades de EnlacesPanel';
+  $('newsBody').innerHTML = list.map(n => `<h3>Versión ${esc(n.version)}${n.version === d.version ? ' <span class="tag">la tuya</span>' : ''}</h3>
+    <ul>${n.items.map(i => `<li>${md(i)}</li>`).join('')}</ul>`).join('');
+  $('news').showModal();
+}
+// Tras actualizar el servidor, enseña una vez lo nuevo (en el navegador y en la app)
+function newsIfUpdated() {
+  const k = 'enlacespanel-visto', seen = localStorage.getItem(k);
+  localStorage.setItem(k, info.version);
+  if (seen && seen !== info.version && newer(info.version, seen)) showNews(seen).catch(() => {});
+}
+$('newsBtn').onclick = () => showNews();
+$('vChip').onclick = () => showNews();
+$('newsClose').onclick = () => $('news').close();
+$('appNewsBtn').onclick = () => AND.news();
+$('appCheckBtn').onclick = () => AND.checkUpdate();
 
 // ---------- compartir ----------
 const AND = window.EnlacesPanelAndroid;  // dentro de la app de Android

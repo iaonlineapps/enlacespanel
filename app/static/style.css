@@ -127,6 +127,15 @@ main.ed[data-dev=pc]{grid-template-columns:minmax(0,1fr) minmax(0,600px);max-wid
 details.card summary{cursor:pointer}
 details.card ol{margin:10px 0 0;padding-left:20px}
 details.card li{margin:6px 0}
+/* versión y novedades */
+.vchip{min-height:32px;padding:0 10px;border-radius:999px;font:600 13px ui-monospace,monospace;background:transparent;color:var(--grey);border:1px solid var(--line)}
+.vchip:hover{color:var(--red);border-color:var(--red)}
+dialog.news{max-width:min(560px,92vw);max-height:80vh;overflow:auto;border:0;border-radius:14px;padding:22px 24px;background:var(--bg);color:var(--ink);box-shadow:0 30px 80px -20px #000a}
+dialog.news::backdrop{background:#0008}
+dialog.news h2{border:0;padding:0;margin:0 0 6px}
+dialog.news ul{padding-left:20px;margin:6px 0 12px}dialog.news li{margin:6px 0}
+dialog.news .tag{font-size:12px;color:var(--red);border:1px solid var(--red);border-radius:999px;padding:0 8px;vertical-align:2px}
+dialog.news[open]{animation:entra .25s ease-out}
 /* aviso */
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(140px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-size:15px;transition:transform .25s;z-index:9;max-width:92vw;display:flex;gap:12px;align-items:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
@@ -154,5 +163,5 @@ button:active,.btn:active{transform:scale(.97)}
  .tabs button{flex:none}
  .top{gap:8px}
  .top .btn,.top button{min-height:40px;padding:0 12px}
- .top .seg{display:none}
+ .top .seg,.top .vchip{display:none}
 }

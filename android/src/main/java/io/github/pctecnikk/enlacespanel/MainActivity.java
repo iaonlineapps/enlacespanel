@@ -571,6 +571,18 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String version() { return Novedades.version(a); }
+
+        /** Novedades de la app (la web tiene las suyas). */
+        @JavascriptInterface
+        public void news() {
+            a.runOnUiThread(new Runnable() { @Override public void run() { Novedades.show(a, a.prefs, null); } });
+        }
+
+        /** Mira ahora si hay una versión nueva de la app en GitHub. */
+        @JavascriptInterface
+        public void checkUpdate() {
+            a.runOnUiThread(new Runnable() { @Override public void run() { Novedades.check(a, a.prefs, true); } });
+        }
     }
 
     // ------------------------------------------------------------------ Atrás y ciclo de vida

@@ -82,4 +82,18 @@ with TestClient(app) as c:
     html_=ok(TestClient(app).get("/pepe-luis")).text
     assert 'class="ic"' in html_ and "anim-viva" in html_ and "<svg viewBox" in html_ and "wa.me" in html_, html_[-1500:]
     ok(c3.delete(f"/api/links/{lk['id']}", headers=H)); ok(TestClient(app).get(lk["image"]), 404)
+    # el administrador crea usuarios y cambia contraseñas
+    ok(c3.post("/api/admin/users", headers=H, json={"username":"nuevo1","password":"12345678"}), 403)
+    ok(c.post("/api/admin/users", headers=H, json={"username":"nu","password":"12345678"}), 400)
+    ok(c.post("/api/admin/users", headers=H, json={"username":"nuevo1","password":"corta"}), 400)
+    ok(c.post("/api/admin/users", headers=H, json={"username":"nuevo1","password":"12345678"}))
+    ok(c.post("/api/admin/users", headers=H, json={"username":"nuevo1","password":"12345678"}), 409)
+    c4=TestClient(app); ok(c4.post("/api/login", headers=H, json={"username":"nuevo1","password":"12345678"}))
+    nid=[u for u in ok(c.get("/api/admin/users")).json() if u["username"]=="nuevo1"][0]
+    assert nid["status"]=="approved" and not nid["is_admin"]
+    ok(c.post(f"/api/admin/users/{nid['id']}", headers=H, json={"action":"password","password":"otraclave9"}))
+    ok(c4.get("/api/pages"), 401)
+    ok(c4.post("/api/login", headers=H, json={"username":"nuevo1","password":"otraclave9"}))
+    nv=ok(c4.get("/api/novedades")).json(); assert nv["novedades"][0]["version"]==nv["version"] and nv["novedades"][0]["items"], nv
+    ok(TestClient(app).get("/api/novedades"), 401)
     print("TODO OK", r.headers.get("content-security-policy") is not None)
