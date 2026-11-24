@@ -67,26 +67,26 @@ async function start() {
   me = info.user;
   if (!me) return showAuth();
   $('auth').hidden = true; $('app').hidden = false;
-  $('usersTab').hidden = !me.is_admin; $('homeBox').hidden = !me.is_admin;
+  $('usersTab').hidden = !me.is_admin; $('homeBox').hidden = !me.is_admin; $('serverBox').hidden = !me.is_admin;
+  $('sPort').textContent = location.port || (location.protocol === 'https:' ? '443' : '80');
   $('meName').textContent = me.username; $('ver').textContent = info.version;
   $('maxPages').textContent = info.max_pages; $('obBase').textContent = BASE; $('sBase').textContent = BASE;
   $('homeUrl').textContent = BASE;
   buildStatic();
   pages = await api('/api/pages');
-  if (!pages.length) return showOnboard();
+  if (!pages.length) {
+    // La primera página se crea sola con tu usuario; la dirección y el resto se cambian en Ajustes
+    pages.push(await api('/api/pages', {method: 'POST', body: {auto: true}}));
+    toast('Tu página ya está creada. Empieza añadiendo enlaces.');
+  }
   const want = Number(localStorage.getItem('enlacespanel-page'));
   await openPage((pages.find(p => p.id === want) || pages[0]).id);
-}
-function showOnboard() {
-  $('editor').hidden = true; $('onboard').hidden = false; $('tabs').hidden = true;
-  $('pageSel').hidden = true; $('openPage').hidden = true;
-  $('obSlug').value = me.username.toLowerCase().replace(/[^a-z0-9_-]/g, '');
 }
 $('obForm').onsubmit = async e => {
   e.preventDefault();
   try {
     const p = await api('/api/pages', {method: 'POST', body: {slug: $('obSlug').value, name: $('obName').value}});
-    pages.push(p); $('onboard').hidden = true; await openPage(p.id); toast('Página creada');
+    pages.push(p); $('onboard').hidden = true; tab = 'links'; await openPage(p.id); toast('Página creada');
   } catch (err) { $('obErr').textContent = err.message; }
 };
 async function openPage(id) {
@@ -98,13 +98,19 @@ async function openPage(id) {
   fillPage(); await loadClicks(); renderList(); refreshPreview(true); showTab(tab);
 }
 $('pageSel').onchange = e => openPage(Number(e.target.value));
+const pageUrl = () => P.url || BASE + P.slug;
 function fillPage() {
-  $('openPage').href = '/' + P.slug;
-  $('pageUrl').textContent = BASE + P.slug;
+  $('pageUrl').textContent = pageUrl();
+  $('sUrl').textContent = pageUrl(); $('sUrl').href = pageUrl();
+  $('sDomain').value = P.domain || '';
+  const srv = (!P.domain && P.url) ? P.url.slice(0, P.url.length - P.slug.length) : BASE;
+  $('sBase').textContent = srv; $('obBase').textContent = srv;
   $('fName').value = P.name; $('fBio').value = P.bio; $('fLegal').value = P.legal; $('bioCount').textContent = P.bio.length;
   $('sSlug').value = P.slug; $('sPub').checked = P.published;
   renderThemes(); renderSocials(); renderQr();
-  if (me.is_admin) api('/api/admin/settings').then(s => { $('sHome').checked = s.home === P.slug; });
+  if (me.is_admin) api('/api/admin/settings').then(s => {
+    $('sHome').checked = s.home === P.slug; $('sPublic').value = s.public_url || ''; $('sReg').checked = s.allow_register;
+  });
 }
 async function savePage(fields, msg) {
   try {
@@ -340,6 +346,21 @@ $('sHome').onchange = async e => {
   try { await api('/api/admin/settings', {method: 'PUT', body: {home: e.target.checked ? P.slug : ''}}); toast(e.target.checked ? 'Ahora es la portada' : 'Portada quitada'); }
   catch (err) { toast(err.message); e.target.checked = !e.target.checked; }
 };
+$('sDomainSave').onclick = async () => {
+  $('sDomErr').textContent = '';
+  try { P = await api('/api/pages/' + P.id, {method: 'PUT', body: {domain: $('sDomain').value}}); pages[pages.findIndex(p => p.id === P.id)] = P; fillPage(); toast(P.domain ? 'Dominio guardado' : 'Dominio quitado'); }
+  catch (err) { $('sDomErr').textContent = err.message; }
+};
+$('sPublicSave').onclick = async () => {
+  $('sPubErr').textContent = '';
+  try { const r = await api('/api/admin/settings', {method: 'PUT', body: {public_url: $('sPublic').value}}); $('sPublic').value = r.public_url; await openPage(P.id); toast('Dirección del servidor guardada'); }
+  catch (err) { $('sPubErr').textContent = err.message; }
+};
+$('sReg').onchange = async e => {
+  try { await api('/api/admin/settings', {method: 'PUT', body: {allow_register: e.target.checked}}); toast(e.target.checked ? 'Registro abierto' : 'Registro cerrado'); }
+  catch (err) { toast(err.message); e.target.checked = !e.target.checked; }
+};
+$('obCancel').onclick = () => { $('onboard').hidden = true; $('editor').hidden = false; $('tabs').hidden = false; };
 $('newPage').onclick = () => { $('obSlug').value = ''; $('obName').value = ''; $('obErr').textContent = ''; $('editor').hidden = true; $('onboard').hidden = false; $('tabs').hidden = true; };
 $('delPage').onclick = async () => {
   const typed = prompt(`Para borrar la página escribe su dirección: ${P.slug}`);
@@ -380,14 +401,42 @@ $('uList').onclick = async e => {
   catch (err) { toast(err.message); }
 };
 
+// ---------- ver mi página: móvil, tablet o PC ----------
+const DEVICES = {movil: [390, 844, 'Móvil · 390 × 844'], tablet: [820, 1180, 'Tablet · 820 × 1180'], pc: [1440, 900, 'PC · 1440 × 900']};
+let device = localStorage.getItem('enlacespanel-dev') || 'movil';
+function markDevice() {
+  document.querySelectorAll('[data-dev]').forEach(b => b.classList.toggle('on', b.dataset.dev === device));
+}
+function fitViewer() {
+  if ($('viewer').hidden) return;
+  const [w, h, label] = DEVICES[device], d = $('vDev'), st = $('vStage');
+  const pad = device === 'pc' ? [16, 36] : [20, 20];
+  d.className = 'vdev ' + device;
+  d.style.width = (w + pad[0]) + 'px'; d.style.height = (h + pad[1]) + 'px';
+  const k = Math.min(1, (st.clientWidth - 32) / (w + pad[0]), (st.clientHeight - 32) / (h + pad[1]));
+  d.style.transform = `translate(-50%, -50%) scale(${k})`;
+  $('vSize').textContent = label + (k < 1 ? ` · al ${Math.round(k * 100)} %` : '');
+}
+function setDevice(dv) { device = dv; localStorage.setItem('enlacespanel-dev', dv); markDevice(); fitViewer(); }
+document.querySelectorAll('[data-dev]').forEach(b => b.onclick = () => setDevice(b.dataset.dev));
+$('openPage').onclick = () => {
+  $('vFrame').src = '/' + P.slug + '?vista=1&t=' + Date.now();
+  $('vOpen').href = '/' + P.slug + '?vista=1';
+  $('viewer').hidden = false; fitViewer();
+};
+$('vClose').onclick = () => { $('viewer').hidden = true; $('vFrame').src = 'about:blank'; };
+addEventListener('resize', fitViewer);
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('viewer').hidden) $('vClose').onclick(); });
+markDevice();
+
 // ---------- compartir ----------
 const AND = window.EnlacesPanelAndroid;  // dentro de la app de Android
 $('copyUrl').onclick = async () => {
-  if (AND) return AND.copy(BASE + P.slug);
-  try { await navigator.clipboard.writeText(BASE + P.slug); toast('Enlace copiado'); } catch (e) { toast(BASE + P.slug); }
+  if (AND) return AND.copy(pageUrl());
+  try { await navigator.clipboard.writeText(pageUrl()); toast('Enlace copiado'); } catch (e) { toast(pageUrl()); }
 };
-if (AND) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => AND.share(BASE + P.slug, P.name); }
-else if (navigator.share) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => navigator.share({title: P.name, url: BASE + P.slug}).catch(() => {}); }
+if (AND) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => AND.share(pageUrl(), P.name); }
+else if (navigator.share) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => navigator.share({title: P.name, url: pageUrl()}).catch(() => {}); }
 
 start().catch(err => { document.body.textContent = 'No se puede conectar con el servidor: ' + err.message; });
 })();

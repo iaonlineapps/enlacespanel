@@ -26,3 +26,6 @@ SESSION_DAYS = 30
 # Datos del responsable para el aviso de privacidad (RGPD)
 OWNER_NAME = os.environ.get("OWNER_NAME", "").strip()
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "").strip()
+# Dirección pública del servidor (por ejemplo https://enlaces.midominio.com). También se puede
+# poner desde el panel (Ajustes → Servidor); lo del panel tiene preferencia.
+PUBLIC_URL = os.environ.get("PUBLIC_URL", "").strip().rstrip("/")

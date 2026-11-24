@@ -15,6 +15,7 @@ services:
       - MAX_PAGES=${MAX_PAGES:-5}
       - MAX_LINKS=${MAX_LINKS:-100}
       - STATS_DAYS=${STATS_DAYS:-400}
+      - PUBLIC_URL=${PUBLIC_URL:-}
       - OWNER_NAME=${OWNER_NAME:-}
       - CONTACT_EMAIL=${CONTACT_EMAIL:-}
     volumes:

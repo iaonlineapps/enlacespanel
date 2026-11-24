@@ -15,7 +15,11 @@ quien visita tu página.
 
 - **Tu página pública** en `http://tu-servidor/tu-nombre`, con foto, nombre, bio, redes
   sociales y tus enlaces. Se genera en el servidor: carga al instante incluso en móviles viejos.
-- **Editor con vista previa en directo** dentro de un móvil, como en las apps de pago.
+- **Editor con vista previa en directo** dentro de un móvil, y botón **Ver mi página** para verla
+  como en un **móvil, una tablet o un PC**.
+- **Tu dominio:** pon la dirección pública del servidor (`https://enlaces.midominio.com/laura`)
+  o un **dominio propio para cada página** (`https://laura.com`). El enlace, el botón Compartir
+  y el QR usan tu dominio.
 - **Enlaces** con emoji, **títulos de sección**, ordenar arrastrando (o con ↑ ↓), ocultar sin
   borrar, **destacar** uno para que llame la atención y **programarlos** (que aparezcan o
   desaparezcan solos en una fecha, perfecto para ofertas o eventos).
@@ -47,6 +51,8 @@ Hecho con Python (FastAPI + SQLite) y JavaScript sin frameworks.
 | **Editar un enlace**: destacar y programar | **Código QR** para imprimir |
 | ![Modo oscuro](docs/capturas/modo-oscuro.png) | ![Entrar](docs/capturas/entrar.png) |
 | **Modo oscuro** | **Pantalla de entrada** |
+| ![Ajustes](docs/capturas/ajustes.png) | ![Ver en PC](docs/capturas/ver-pc.png) |
+| **Ajustes**: dirección y dominio propio | **Ver mi página** en móvil, tablet o PC |
 
 </details>
 
@@ -78,7 +84,8 @@ Al terminar te dice la dirección: `http://IP-DE-TU-PI:8092/panel`
 
 - Si pusiste `ADMIN_USER` y `ADMIN_PASSWORD` en `.env`, entra con ellos.
 - Si no, **la primera cuenta que crees será la del administrador**.
-- Después elige la dirección de tu página (por ejemplo `laura`) y empieza a añadir enlaces.
+- Entras directamente al editor: tu página ya está creada con tu usuario (por ejemplo
+  `/david`). La dirección, el dominio y lo demás se cambian cuando quieras en **Ajustes**.
 - En **Ajustes** puedes marcar tu página como **portada del servidor**: así se abre al entrar en
   `http://tu-servidor/` a secas.
 
@@ -87,6 +94,7 @@ Al terminar te dice la dirección: `http://IP-DE-TU-PI:8092/panel`
 | Variable | Para qué sirve | Por defecto |
 |---|---|---|
 | `DATA_DIR` | Carpeta con todos los datos (mejor en un disco externo que en la tarjeta SD) | `./data` |
+| `PUBLIC_URL` | Dirección pública del servidor si tienes dominio (también en Ajustes → Servidor) | vacío |
 | `PORT` | Puerto de la web | `8092` |
 | `TZ` | Zona horaria (afecta a las estadísticas y a los enlaces programados) | `Europe/Madrid` |
 | `PUID` / `PGID` | Usuario dueño de los archivos (`id -u` / `id -g`) | `1000` |
@@ -187,6 +195,15 @@ Las formas más sencillas:
 - **Cloudflare Tunnel** (gratis, sin abrir puertos en el router).
 - **Proxy inverso con HTTPS** en tu Pi: Caddy, Nginx Proxy Manager o Traefik, más un dominio o
   un DNS dinámico (DuckDNS, por ejemplo).
+
+Después, en el panel, entra en **Ajustes**:
+
+- **Servidor → Dirección pública** (solo el administrador): escribe la dirección con la que se
+  entra desde Internet, por ejemplo `https://enlaces.midominio.com`. Así las páginas se comparten
+  como `https://enlaces.midominio.com/laura` y los QR llevan esa dirección.
+- **Dominio propio** (cada página): si alguien tiene su propio dominio (por ejemplo `laura.com`),
+  lo escribe ahí y apunta ese dominio a tu servidor desde el proxy. Al entrar en `https://laura.com`
+  se abre directamente su página.
 
 El panel (`/panel`) está protegido con usuario y contraseña. Si solo quieres que se vean las
 páginas, puedes bloquear `/panel` y `/api/` en el proxy para las IPs de fuera.

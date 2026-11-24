@@ -90,6 +90,24 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .screen{width:100%;height:100%;border:0;border-radius:34px;display:block;background:#fff}
 .stage .row{justify-content:center;margin-top:12px}
 .url{font:14px ui-monospace,monospace;color:var(--grey);text-align:center;margin-top:10px;overflow-wrap:anywhere}
+/* elegir dispositivo */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;color:var(--ink);min-height:40px;padding:0 12px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--bg)}
+/* ver mi página */
+.viewer{position:fixed;inset:0;z-index:8;background:color-mix(in srgb,var(--bg) 92%,#000);display:flex;flex-direction:column}
+.vbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px max(3vw,12px);border-bottom:1px solid var(--line);background:var(--bg)}
+.vbar b{margin-right:auto;font-size:18px}
+.vstage{flex:1;position:relative;overflow:hidden}
+.vdev{background:#111;border-radius:28px;padding:10px;box-shadow:0 30px 60px -20px #0007;position:absolute;left:50%;top:50%;transform-origin:center center}
+.vdev iframe{display:block;border:0;border-radius:20px;background:#fff;width:100%;height:100%}
+.vdev.pc{border-radius:12px;padding:28px 8px 8px}
+.vdev.pc iframe{border-radius:4px}
+.vsize{text-align:center;font-size:13px;color:var(--grey);margin:0 0 10px}
+details.card summary{cursor:pointer}
+details.card ol{margin:10px 0 0;padding-left:20px}
+details.card li{margin:6px 0}
 /* aviso */
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(140px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-size:15px;transition:transform .25s;z-index:9;max-width:92vw;display:flex;gap:12px;align-items:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
@@ -112,4 +130,5 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
  .tabs button{flex:none}
  .top{gap:8px}
  .top .btn,.top button{min-height:40px;padding:0 12px}
+ .top .seg{display:none}
 }

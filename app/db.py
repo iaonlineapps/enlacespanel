@@ -115,6 +115,10 @@ def purge_old_stats():
 
 def init():
     conn().executescript(SCHEMA)
+    # Columnas añadidas en versiones nuevas (las bases de datos antiguas no las tienen)
+    cols = {r["name"] for r in q("PRAGMA table_info(pages)")}
+    if "domain" not in cols:
+        run("ALTER TABLE pages ADD COLUMN domain TEXT DEFAULT ''")
     if ADMIN_USER and ADMIN_PASSWORD and not q1("SELECT 1 FROM users WHERE username=?", ADMIN_USER):
         run("INSERT INTO users(username,pw_hash,is_admin,status,created) VALUES(?,?,1,'approved',?)",
             ADMIN_USER, hash_pw(ADMIN_PASSWORD), time.time())

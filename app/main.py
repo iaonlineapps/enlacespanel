@@ -10,7 +10,7 @@ from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, Redirec
 from fastapi.staticfiles import StaticFiles
 
 from . import db, page
-from .config import AVATARS, ALLOW_REGISTER, MAX_LINKS, MAX_PAGES, STATS_DAYS
+from .config import AVATARS, ALLOW_REGISTER, MAX_LINKS, MAX_PAGES, PUBLIC_URL, STATS_DAYS
 from .version import VERSION
 
 STATIC = Path(__file__).parent / "static"
@@ -77,7 +77,48 @@ def own_page(u, page_id: int):
 
 
 def base_url(request: Request) -> str:
+    """Dirección pública del servidor: la de Ajustes, la de PUBLIC_URL o la que use el navegador."""
+    pub = db.get_setting("public_url") or PUBLIC_URL
+    if pub:
+        return pub
     return f"{request.url.scheme}://{request.headers.get('host', request.url.netloc)}"
+
+
+def page_url(p, base: str) -> str:
+    """Dirección para compartir una página: su dominio propio o servidor/direccion."""
+    if p["domain"]:
+        return f"https://{p['domain']}"
+    return f"{base}/{p['slug']}"
+
+
+def registration_open() -> bool:
+    v = db.get_setting("allow_register")
+    return ALLOW_REGISTER if v == "" else v == "1"
+
+
+DOMAIN_RE = re.compile(r"^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
+
+
+def clean_public_url(raw) -> str:
+    u = str(raw or "").strip().rstrip("/")
+    if not u:
+        return ""
+    if not re.match(r"^https?://", u, re.I):
+        u = "https://" + u
+    parts = urlsplit(u)
+    if not parts.hostname or parts.path not in ("", "/") or parts.query or " " in u:
+        err(400, "Escribe solo la dirección, por ejemplo https://enlaces.midominio.com")
+    return f"{parts.scheme.lower()}://{parts.netloc.lower()}"
+
+
+def clean_domain(raw) -> str:
+    d = str(raw or "").strip().lower()
+    d = re.sub(r"^https?://", "", d).split("/")[0]
+    if not d:
+        return ""
+    if not DOMAIN_RE.match(d):
+        err(400, "Ese dominio no parece válido. Escríbelo así: laura.com o enlaces.laura.com")
+    return d
 
 
 def clean_url(raw) -> str:
@@ -117,8 +158,8 @@ def ts(v):
         return None
 
 
-def page_json(p):
-    return {"id": p["id"], "slug": p["slug"], "name": p["name"], "bio": p["bio"],
+def page_json(p, base=""):
+    return {"id": p["id"], "slug": p["slug"], "domain": p["domain"] or "", "url": page_url(p, base) if base else "", "name": p["name"], "bio": p["bio"],
             "avatar": f"/a/{p['avatar']}" if p["avatar"] else "", "theme": p["theme"],
             "style": db.jload(p["style"], {}), "socials": db.jload(p["socials"], []),
             "legal": p["legal"], "published": bool(p["published"])}
@@ -156,7 +197,7 @@ def note_fail(request: Request):
 def me(request: Request):
     u = db.session_user(request.cookies.get(COOKIE, ""))
     no_users = db.q1("SELECT COUNT(*) n FROM users")["n"] == 0
-    info = {"version": VERSION, "allow_register": ALLOW_REGISTER or no_users, "first_user": no_users,
+    info = {"version": VERSION, "allow_register": registration_open() or no_users, "first_user": no_users,
             "max_pages": MAX_PAGES, "socials": page.SOCIALS,
             "themes": {k: {"n": t["n"], "bg": t["bg"], "text": t["text"]} for k, t in page.THEMES.items()}}
     if not u:
@@ -193,7 +234,7 @@ def logout(request: Request):
 async def register(request: Request):
     check_rate(request)
     first = db.q1("SELECT COUNT(*) n FROM users")["n"] == 0
-    if not ALLOW_REGISTER and not first:
+    if not registration_open() and not first:
         err(403, "El registro está cerrado")
     d = await request.json()
     name, pw = text(d.get("username"), 64), str(d.get("password") or "")
@@ -263,7 +304,8 @@ def export(request: Request):
 @app.get("/api/pages")
 def list_pages(request: Request):
     u = user_or_401(request)
-    return [page_json(p) for p in db.q("SELECT * FROM pages WHERE user_id=? ORDER BY id", u["id"])]
+    b = base_url(request)
+    return [page_json(p, b) for p in db.q("SELECT * FROM pages WHERE user_id=? ORDER BY id", u["id"])]
 
 
 def check_slug(slug: str, page_id: int = 0) -> str:
@@ -281,18 +323,33 @@ async def create_page(request: Request):
     if db.q1("SELECT COUNT(*) n FROM pages WHERE user_id=?", u["id"])["n"] >= MAX_PAGES:
         err(400, f"Puedes tener como mucho {MAX_PAGES} páginas")
     d = await request.json()
-    slug = check_slug(d.get("slug") or "")
+    if d.get("auto"):
+        slug = free_slug(u["username"])
+    else:
+        slug = check_slug(d.get("slug") or "")
     now = time.time()
     cur = db.run("INSERT INTO pages(user_id,slug,name,theme,created,updated) VALUES(?,?,?,?,?,?)",
                  u["id"], slug, text(d.get("name"), 60) or u["username"], "noche", now, now)
-    return page_json(db.q1("SELECT * FROM pages WHERE id=?", cur.lastrowid))
+    return page_json(db.q1("SELECT * FROM pages WHERE id=?", cur.lastrowid), base_url(request))
+
+
+def free_slug(name: str) -> str:
+    """Primera dirección libre a partir del nombre de usuario (david, david-2, david-3...)."""
+    base = re.sub(r"[^a-z0-9_-]", "", name.lower().replace(".", "-"))[:28] or "mi-pagina"
+    if len(base) < 2 or not base[0].isalnum():
+        base = "pagina-" + base
+    for i in range(1, 1000):
+        s = base if i == 1 else f"{base}-{i}"
+        if s not in RESERVED and not db.q1("SELECT 1 FROM pages WHERE slug=?", s):
+            return s
+    return "pagina-" + secrets.token_hex(3)
 
 
 @app.get("/api/pages/{page_id}")
 def get_page(page_id: int, request: Request):
     p = own_page(user_or_401(request), page_id)
     links = [link_json(l) for l in db.q("SELECT * FROM links WHERE page_id=? ORDER BY pos,id", page_id)]
-    return page_json(p) | {"links": links}
+    return page_json(p, base_url(request)) | {"links": links}
 
 
 @app.put("/api/pages/{page_id}")
@@ -302,6 +359,11 @@ async def update_page(page_id: int, request: Request):
     f = {}
     if "slug" in d:
         f["slug"] = check_slug(d["slug"], page_id)
+    if "domain" in d:
+        dom = clean_domain(d["domain"])
+        if dom and db.q1("SELECT 1 FROM pages WHERE domain=? AND id<>?", dom, page_id):
+            err(409, "Ese dominio ya lo usa otra página")
+        f["domain"] = dom
     for k, n in (("name", 60), ("bio", 160), ("legal", 3000)):
         if k in d:
             f[k] = text(d[k], n)
@@ -325,7 +387,7 @@ async def update_page(page_id: int, request: Request):
     if f:
         f["updated"] = time.time()
         db.run(f"UPDATE pages SET {', '.join(k + '=?' for k in f)} WHERE id=?", *f.values(), p["id"])
-    return page_json(db.q1("SELECT * FROM pages WHERE id=?", page_id))
+    return page_json(db.q1("SELECT * FROM pages WHERE id=?", page_id), base_url(request))
 
 
 def _delete_page(p):
@@ -506,29 +568,36 @@ async def admin_user(user_id: int, request: Request):
 @app.get("/api/admin/settings")
 def admin_settings(request: Request):
     admin_or_403(request)
-    return {"home": db.get_setting("home")}
+    return {"home": db.get_setting("home"), "public_url": db.get_setting("public_url") or PUBLIC_URL,
+            "allow_register": registration_open()}
 
 
 @app.put("/api/admin/settings")
 async def admin_settings_put(request: Request):
     admin_or_403(request)
-    home = text((await request.json()).get("home"), 32).lower()
-    if home and not db.q1("SELECT 1 FROM pages WHERE slug=?", home):
-        err(400, "No hay ninguna página con esa dirección")
-    db.set_setting("home", home)
-    return {"home": home}
+    d = await request.json()
+    if "home" in d:
+        home = text(d.get("home"), 32).lower()
+        if home and not db.q1("SELECT 1 FROM pages WHERE slug=?", home):
+            err(400, "No hay ninguna página con esa dirección")
+        db.set_setting("home", home)
+    if "public_url" in d:
+        db.set_setting("public_url", clean_public_url(d["public_url"]))
+    if "allow_register" in d:
+        db.set_setting("allow_register", "1" if d["allow_register"] else "0")
+    return admin_settings(request)
 
 
 # --- QR --------------------------------------------------------------------
 @app.get("/qr/{slug}.{fmt}")
 def qr(slug: str, fmt: str, request: Request, color: str = "#111111", fondo: str = "#ffffff"):
-    p = db.q1("SELECT slug FROM pages WHERE slug=?", slug.lower())
+    p = db.q1("SELECT slug, domain FROM pages WHERE slug=?", slug.lower())
     if not p or fmt not in ("svg", "png"):
         err(404, "No encontrado")
     dark = color if HEX_RE.match(color) else "#111111"
     light = fondo if HEX_RE.match(fondo) else "#ffffff"
     buf = io.BytesIO()
-    segno.make(f"{base_url(request)}/{p['slug']}", error="m").save(
+    segno.make(page_url(p, base_url(request)), error="m").save(
         buf, kind=fmt, scale=12 if fmt == "png" else 10, border=2, dark=dark, light=light)
     media = "image/svg+xml" if fmt == "svg" else "image/png"
     return Response(buf.getvalue(), media_type=media, headers={
@@ -597,6 +666,12 @@ def _show(request: Request, p, preview: bool):
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request, vista: int = 0):
+    # Dominio propio de una página (laura.com → su página)
+    host = (request.headers.get("host") or "").split(":")[0].lower()
+    if host:
+        p = db.q1("SELECT * FROM pages WHERE domain=?", host)
+        if p:
+            return _show(request, p, bool(vista))
     slug = db.get_setting("home")
     p = db.q1("SELECT * FROM pages WHERE slug=?", slug) if slug else None
     if not p or not p["published"]:

@@ -51,4 +51,20 @@ with TestClient(app) as c:
     for i in range(6): c2.post("/api/login", headers=H, json={"username":"x","password":"y"})
     ok(c2.post("/api/login", headers=H, json={"username":"ana","password":"12345678"}), 429)
     ok(c2.post("/api/account/delete", headers=H, json={"password":"12345678"}))
+    # página automática, dominios y ajustes del servidor
+    import app.main as M; M._fails.clear()
+    c3=TestClient(app)
+    ok(c3.post("/api/register", headers=H, json={"username":"Pepe.Luis","password":"12345678","accept":1}))
+    ok(c.post(f"/api/admin/users/{[u for u in ok(c.get('/api/admin/users')).json() if u['username']=='Pepe.Luis'][0]['id']}", headers=H, json={"action":"approve"}))
+    ok(c3.post("/api/login", headers=H, json={"username":"Pepe.Luis","password":"12345678"}))
+    ap=ok(c3.post("/api/pages", headers=H, json={"auto":True})).json(); assert ap["slug"]=="pepe-luis", ap
+    ok(c3.put(f"/api/pages/{ap['id']}", headers=H, json={"domain":"no valido"}), 400)
+    ap=ok(c3.put(f"/api/pages/{ap['id']}", headers=H, json={"domain":"https://Pepe.ES/"})).json(); assert ap["domain"]=="pepe.es" and ap["url"]=="https://pepe.es", ap
+    assert "Pepe.Luis" in ok(TestClient(app).get("/", headers={"host":"pepe.es"})).text
+    ok(c3.put("/api/admin/settings", headers=H, json={"public_url":"x"}), 403)
+    ok(c.put("/api/admin/settings", headers=H, json={"public_url":"enlaces.midominio.com/x"}), 400)
+    s=ok(c.put("/api/admin/settings", headers=H, json={"public_url":"enlaces.midominio.com","allow_register":False})).json()
+    assert s["public_url"]=="https://enlaces.midominio.com" and s["allow_register"] is False, s
+    assert ok(c.get(f"/api/pages/{p['id']}")).json()["url"]=="https://enlaces.midominio.com/david"
+    ok(TestClient(app).post("/api/register", headers=H, json={"username":"otro","password":"12345678","accept":1}), 403)
     print("TODO OK", r.headers.get("content-security-policy") is not None)

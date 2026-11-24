@@ -33,7 +33,12 @@
  <header class="top">
   <a class="brand" href="/panel"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg><span>Enlaces<b>Panel</b></span></a>
   <select id="pageSel" aria-label="Página que editas"></select>
-  <a class="btn ghost" id="openPage" target="_blank" rel="noopener">Ver mi página ↗</a>
+  <div class="seg" id="devSel" role="group" aria-label="Ver como">
+   <button type="button" data-dev="movil" class="on" title="Ver como en un móvil">Móvil</button>
+   <button type="button" data-dev="tablet" title="Ver como en una tablet">Tablet</button>
+   <button type="button" data-dev="pc" title="Ver como en un ordenador">PC</button>
+  </div>
+  <button type="button" class="ghost" id="openPage">Ver mi página</button>
   <button class="ghost" id="logout">Salir</button>
  </header>
  <nav class="tabs" id="tabs" aria-label="Secciones">
@@ -54,15 +59,15 @@
 
  <!-- Sin páginas todavía -->
  <section class="auth" id="onboard" hidden>
-  <h1>Tu primera <b>página</b></h1>
-  <p class="hint">Elige la dirección. Por ejemplo, si escribes <b>laura</b>, tu página será <span id="obBase"></span>laura</p>
+  <h1>Otra <b>página</b></h1>
+  <p class="hint">Elige la dirección. Por ejemplo, si escribes <b>tienda</b>, la página será <span id="obBase"></span>tienda</p>
   <form id="obForm">
    <label for="obSlug">Dirección</label>
    <input id="obSlug" autocapitalize="off" maxlength="32" placeholder="tu-nombre" required>
    <label for="obName">Nombre que se ve</label>
    <input id="obName" maxlength="60" placeholder="Laura Méndez">
    <div class="err" id="obErr" role="alert"></div>
-   <button type="submit">Crear página</button>
+   <div class="row"><button type="submit">Crear página</button><button type="button" class="ghost" id="obCancel">Cancelar</button></div>
   </form>
  </section>
 
@@ -153,13 +158,37 @@
 
    <div data-pane="settings" hidden>
     <h2>Esta página</h2>
-    <label for="sSlug">Dirección</label>
+    <p>Tu página se ve en: <a id="sUrl" target="_blank" rel="noopener"></a></p>
+    <label for="sSlug">Dirección dentro del servidor</label>
     <div class="row"><span class="hint" id="sBase"></span><input id="sSlug" maxlength="32" autocapitalize="off"><button type="button" id="sSlugSave">Cambiar</button></div>
     <div class="err" id="sErr" role="alert"></div>
     <label class="inline"><input type="checkbox" id="sPub"> Publicada (si la desactivas, solo tú la ves en la vista previa)</label>
     <div id="homeBox" hidden>
      <label class="inline"><input type="checkbox" id="sHome"> Mostrar esta página en la portada del servidor (<span id="homeUrl"></span>)</label>
     </div>
+
+    <h2>Dominio propio <span class="opt">(opcional)</span></h2>
+    <p class="hint">Si tienes un dominio para esta página (por ejemplo <b>laura.com</b> o <b>enlaces.laura.com</b>), escríbelo aquí y tu página se abrirá directamente en él, sin nada detrás.</p>
+    <label for="sDomain">Dominio</label>
+    <div class="row"><input id="sDomain" autocapitalize="off" inputmode="url" placeholder="laura.com"><button type="button" id="sDomainSave">Guardar</button></div>
+    <div class="err" id="sDomErr" role="alert"></div>
+    <details class="card"><summary><b>Cómo conectar tu dominio</b></summary>
+     <ol class="hint">
+      <li>En la web donde compraste el dominio, crea un registro <b>A</b> que apunte a la IP pública de tu casa (o un <b>CNAME</b> a tu DNS dinámico).</li>
+      <li>En tu proxy con HTTPS (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…) añade ese dominio y envíalo a esta Raspberry, al puerto <b><span id="sPort"></span></b>.</li>
+      <li>Escribe el dominio aquí y pulsa Guardar. El enlace, el botón Compartir y el código QR usarán tu dominio.</li>
+     </ol>
+    </details>
+
+    <div id="serverBox" hidden>
+     <h2>Servidor <span class="opt">(administrador)</span></h2>
+     <label for="sPublic">Dirección pública del servidor</label>
+     <p class="hint">La dirección con la que se entra desde Internet, por ejemplo <b>https://enlaces.midominio.com</b>. Se usa para los enlaces que compartes y para los QR de todas las páginas que no tengan dominio propio. Déjala vacía para usar la dirección del navegador.</p>
+     <div class="row"><input id="sPublic" autocapitalize="off" inputmode="url" placeholder="https://enlaces.midominio.com"><button type="button" id="sPublicSave">Guardar</button></div>
+     <div class="err" id="sPubErr" role="alert"></div>
+     <label class="inline"><input type="checkbox" id="sReg"> Permitir que otras personas pidan cuenta (tú las apruebas en Usuarios)</label>
+    </div>
+
     <h2>Otra página</h2>
     <p class="hint">Puedes tener varias: una personal, otra para tu negocio… (máximo <span id="maxPages"></span>).</p>
     <button type="button" class="ghost" id="newPage">+ Crear otra página</button>
@@ -199,6 +228,21 @@
    <div class="row"><button type="button" class="ghost small" id="copyUrl">Copiar enlace</button><button type="button" class="ghost small" id="shareUrl" hidden>Compartir</button></div>
   </aside>
  </main>
+</div>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-label="Tu página">
+ <div class="vbar">
+  <b>Tu página</b>
+  <div class="seg" id="devSel2" role="group" aria-label="Ver como">
+   <button type="button" data-dev="movil">Móvil</button>
+   <button type="button" data-dev="tablet">Tablet</button>
+   <button type="button" data-dev="pc">PC</button>
+  </div>
+  <a class="btn ghost small" id="vOpen" target="_blank" rel="noopener">Abrir en otra pestaña ↗</a>
+  <button type="button" class="small" id="vClose">Cerrar</button>
+ </div>
+ <div class="vstage" id="vStage"><div class="vdev" id="vDev"><iframe id="vFrame" title="Tu página"></iframe></div></div>
+ <p class="vsize" id="vSize"></p>
 </div>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" hidden>Deshacer</button></div>
