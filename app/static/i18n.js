@@ -157,7 +157,7 @@ const ENH = {
   home: '<input type="checkbox" id="sHome"> Show this page on the server home page (<span id="homeUrl"></span>)',
   domHint: 'If you have a domain for this page (for example <b>laura.com</b> or <b>links.laura.com</b>), type it here and your page will open directly on it, with nothing after it.',
   pg1: 'In Pangolin, go to <b>Resources → Add Resource</b>, type <b>HTTP</b>. Name <b>EnlacesPanel</b> and a subdomain, for example <b>links</b> (you get <b>links.yourdomain.com</b>).',
-  pg2: 'Pick the <b>Site</b> of this Raspberry Pi and set the target to <b>http</b>, the Raspberry Pi IP (<b class="piIp">192.168.1.50</b>) and port <b class="piPort"></b>. Save: Pangolin adds the https certificate by itself.',
+  pg2: 'Pick the <b>Site</b> of this Raspberry Pi and set the target to <b>http</b>, the Raspberry Pi IP (<b class="piIp">192.168.1.x</b>) and port <b class="piPort"></b>. Save: Pangolin adds the https certificate by itself.',
   pg3: 'In that resource, under <b>Authentication</b>, <b>turn off Pangolin authentication</b> (Use Platform SSO off): link pages are public and the panel already has its own username and password.',
   pg4: 'The administrator enters <b>https://links.yourdomain.com</b> in <b>Public server address</b> (below).',
   pg5: 'For a page\'s <b>custom domain</b> (for example <b>laura.com</b>): add it in Pangolin under <b>Domains</b> (with the DNS records it shows you), create another resource with that domain and the same target (Raspberry Pi IP and port <b class="piPort"></b>), and type it above in Custom domain.',

@@ -46,6 +46,77 @@ quien visita tu página.
 
 Hecho con Python (FastAPI + SQLite) y JavaScript sin frameworks.
 
+<details>
+<summary><b>🇬🇧 English</b></summary>
+
+### EnlacesPanel in English
+
+Your own "link in bio" page on your own server, **free and with no fees**. One address to put
+on Instagram, TikTok or your business card, with all your links inside. Built for a Raspberry
+Pi 3, 4 or 5 (it works on any Linux machine with Docker). Very light (about 50 MB of RAM), with
+light/dark mode and **no cookies or trackers** for the people who visit your page.
+
+**Languages:** Spanish and English. The panel opens in your browser's language and you can
+change it in **Account → Language** (or on the sign-in screen). Each page picks its own language
+in **Settings → Page language**: it is used for the fixed texts of the page (footer, privacy
+policy, legal notice). The Android app follows the panel.
+
+**What's included:** your public page at `http://your-server/your-name` with photo, name, bio,
+social icons and links · live preview while you edit (Phone, Tablet or Desktop) · your own
+domain for the server or for each page · links with a photo, logo or emoji, section titles,
+drag to reorder, hide, highlight and schedule (show or expire on a date) · 10 animated themes
+plus your own colours, 4 button styles · stats with no cookies (visits and clicks per day and
+per link) · QR code of your page in PNG or SVG · several pages per user and several users
+approved by the admin · ready-made privacy policy (GDPR) and legal notice · export or delete
+your data · Android app, and on iPhone it can be added to the home screen.
+
+**Install:**
+
+```bash
+git clone https://github.com/pctecnikk/enlacespanel.git
+cd enlacespanel
+./install.sh          # creates the .env file, builds and starts
+```
+
+Open **http://YOUR-PI-IP:8092/panel**. If you set `ADMIN_USER` and `ADMIN_PASSWORD` in `.env`,
+sign in with them; otherwise **the first account you create is the administrator**. Your page
+is created with your username (for example `/laura`).
+
+**Main `.env` settings:** `DATA_DIR` (where everything is stored, better on an external disk),
+`PUBLIC_URL` (your public address if you have a domain), `PORT` (default 8092), `TZ`,
+`PUID`/`PGID`, `ADMIN_USER`/`ADMIN_PASSWORD`, `ALLOW_REGISTER` (`0` = closed), `MAX_PAGES`,
+`MAX_LINKS`, `STATS_DAYS`, `OWNER_NAME`/`CONTACT_EMAIL` (for the privacy policy). Run
+`./install.sh` again after changing it.
+
+**Update:** one line over SSH, from any folder:
+`curl -fsSL https://raw.githubusercontent.com/pctecnikk/enlacespanel/main/update.sh | bash`.
+Your data, `.env` and `docker-compose.yaml` are kept.
+
+**Ready-made image** (no build): `ghcr.io/pctecnikk/enlacespanel:latest`, for PC (amd64) and
+Raspberry Pi (arm64 and arm/v7).
+
+**Android app:** download **EnlacesPanel.apk** from
+[Releases](https://github.com/pctecnikk/enlacespanel/releases) (Android 7 or newer). The first
+time it asks for your server address.
+
+**Uninstall:** `cd enlacespanel && bash uninstall.sh`. It asks before deleting anything, offers a
+backup, removes the Docker container and image, and asks whether to delete your data too (you
+must type `BORRAR` to confirm). The install, update and uninstall scripts speak Spanish.
+
+**Adding a language:** the panel texts are in `app/static/i18n.js` and the public page texts in
+`app/page.py` (the keys are the Spanish texts).
+
+**Screenshots:**
+
+| | |
+|---|---|
+| ![Link editor](docs/capturas/enlaces-en.png) | <img src="docs/capturas/pagina-movil-en.png" width="260" alt="Public page on the phone"> |
+| **Link editor** with live preview | **Your page** on the phone |
+| ![Design](docs/capturas/diseno-en.png) | ![Stats](docs/capturas/estadisticas-en.png) |
+| **Design**: themes, buttons and animation | **Stats** with no cookies |
+
+</details>
+
 ![Editor de enlaces](docs/capturas/enlaces.png)
 
 <details>
@@ -153,7 +224,7 @@ Es el mismo panel de EnlacesPanel dentro de una app, así que siempre está al d
    - **Tu dominio** (lo normal): por ejemplo `enlaces.midominio.com`. Funciona desde cualquier
      sitio, con datos o con cualquier wifi. Si no pones `http://` la app usa `https://`.
    - **La dirección de casa** (opcional): la IP de tu servidor en la wifi de casa, por ejemplo
-     `192.168.1.50:8092`. Solo funciona conectado a la wifi de casa.
+     `192.168.1.x:8092`. Solo funciona conectado a la wifi de casa.
 
    Si pones las dos, **la app usa sola la que funcione**: si el dominio no responde, prueba la
    de casa, y al revés.
@@ -213,12 +284,12 @@ Para que la gente vea tu página desde fuera de casa necesitas una dirección p�
 1. En el panel de Pangolin: **Resources → Add Resource**, tipo **HTTP**. Nombre `EnlacesPanel`
    y subdominio `enlaces` (queda `enlaces.tudominio.com`).
 2. **Site:** el de tu Raspberry (donde corre Newt). **Destino:** `http`, la IP de la Pi y el
-   puerto `8092` (por ejemplo `192.168.1.50:8092`). Guarda: Pangolin pone el certificado https solo.
+   puerto `8092` (por ejemplo `192.168.1.x:8092`). Guarda: Pangolin pone el certificado https solo.
 3. En **Authentication** del recurso, **quita la autenticación de Pangolin** (Use Platform SSO
    apagado). Las páginas de enlaces son públicas y el panel ya pide usuario y contraseña.
 4. **Dominio propio de una página** (por ejemplo `laura.com`): añádelo en Pangolin en **Domains**
    con los registros DNS que te indique, crea otro recurso con ese dominio y el mismo destino
-   (`192.168.1.50:8092`) y escríbelo en **Ajustes → Dominio propio** de esa página.
+   (`192.168.1.x:8092`) y escríbelo en **Ajustes → Dominio propio** de esa página.
 
 **B. Otras formas:** **Cloudflare Tunnel** (gratis, sin abrir puertos) o un **proxy inverso con
 HTTPS** en tu Pi (Caddy, Nginx Proxy Manager o Traefik) más un dominio o un DNS dinámico (DuckDNS,

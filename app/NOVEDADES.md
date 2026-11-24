@@ -3,6 +3,11 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.5.1
+- La guía de Pangolin de Ajustes pone de ejemplo `192.168.1.x` en vez de una IP concreta (si entras
+  por la IP de casa, sigue saliendo la tuya).
+- README con un apartado en inglés y capturas en inglés.
+
 ## 0.5.0
 - **Español o inglés:** elige el idioma del panel en Cuenta → Idioma (o en la pantalla de
   entrada). La primera vez usa el del navegador. La app de Android sigue el mismo idioma.

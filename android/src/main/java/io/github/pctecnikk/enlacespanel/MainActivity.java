@@ -165,9 +165,9 @@ public class MainActivity extends Activity {
         box.addView(main, matchWrap());
 
         box.addView(label(L.t("Dirección en casa (opcional)", "Home address (optional)")));
-        box.addView(text(L.t("La IP de tu servidor en la wifi de casa y el puerto, por ejemplo 192.168.1.50:8092. ", "Your server IP on your home wifi and the port, for example 192.168.1.50:8092. ")
+        box.addView(text(L.t("La IP de tu servidor en la wifi de casa y el puerto, por ejemplo 192.168.1.x:8092. ", "Your server IP on your home wifi and the port, for example 192.168.1.x:8092. ")
                 + L.t("Si pones las dos, la app usa sola la que funcione.", "If you enter both, the app uses whichever works."), 13, GREY));
-        final EditText alt = input("192.168.1.50:8092", prefs.getString(KEY_ALT, ""));
+        final EditText alt = input("192.168.1.x:8092", prefs.getString(KEY_ALT, ""));
         alt.setImeOptions(EditorInfo.IME_ACTION_GO);
         box.addView(alt, matchWrap());
 
