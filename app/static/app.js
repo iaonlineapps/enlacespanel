@@ -1,0 +1,393 @@
+// Panel de EnlacesPanel: JavaScript sin frameworks.
+(() => {
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const BASE = location.origin + '/';
+let me = null, info = null, pages = [], P = null, links = [], clicks = {}, tab = 'links';
+let lastDeleted = null, toastT, previewT, saveT;
+
+async function api(path, opts = {}) {
+  const o = {method: opts.method || 'GET', headers: {'X-EnlacesPanel': '1'}, credentials: 'same-origin'};
+  if (opts.body !== undefined) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(opts.body); }
+  const r = await fetch(path, o);
+  let d = null; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    if (r.status === 401 && path !== '/api/login') { showAuth(); }
+    throw new Error(d && d.detail ? (typeof d.detail === 'string' ? d.detail : 'Datos no válidos') : 'Error ' + r.status);
+  }
+  return d;
+}
+function toast(msg, undo) {
+  $('toastMsg').textContent = msg; $('undo').hidden = !undo;
+  $('toast').classList.add('show'); clearTimeout(toastT);
+  toastT = setTimeout(() => $('toast').classList.remove('show'), undo ? 5000 : 2200);
+}
+function refreshPreview(now) {
+  clearTimeout(previewT);
+  previewT = setTimeout(() => { if (P) $('screen').src = '/' + P.slug + '?vista=1&t=' + Date.now(); }, now ? 0 : 350);
+}
+
+// ---------- entrar ----------
+let registering = false;
+function showAuth() {
+  $('app').hidden = true; $('auth').hidden = false;
+  registering = !!(info && info.first_user);
+  setAuthMode();
+}
+function setAuthMode() {
+  $('authBtn').textContent = registering ? 'Crear cuenta' : 'Entrar';
+  $('authSwitch').textContent = registering ? 'Ya tengo cuenta' : 'Crear cuenta';
+  $('authSwitch').hidden = !info.allow_register || info.first_user;
+  $('acceptRow').hidden = !registering;
+  $('uPass').autocomplete = registering ? 'new-password' : 'current-password';
+  $('authLead').textContent = info.first_user
+    ? 'Bienvenido. Crea la primera cuenta: será la del administrador.'
+    : 'Tu página de enlaces, en tu propio servidor.';
+  $('authErr').textContent = '';
+}
+$('authSwitch').onclick = () => { registering = !registering; setAuthMode(); };
+$('authForm').onsubmit = async e => {
+  e.preventDefault();
+  const body = {username: $('uName').value.trim(), password: $('uPass').value};
+  try {
+    if (registering) {
+      const r = await api('/api/register', {method: 'POST', body: {...body, accept: $('uAccept').checked}});
+      if (!r.approved) { registering = false; setAuthMode(); $('authErr').textContent = 'Cuenta creada. El administrador tiene que aprobarla antes de que puedas entrar.'; return; }
+    }
+    await api('/api/login', {method: 'POST', body});
+    $('uPass').value = '';
+    start();
+  } catch (err) { $('authErr').textContent = err.message; }
+};
+$('logout').onclick = async () => { await api('/api/logout', {method: 'POST'}); location.reload(); };
+
+// ---------- arranque ----------
+async function start() {
+  info = await api('/api/me');
+  me = info.user;
+  if (!me) return showAuth();
+  $('auth').hidden = true; $('app').hidden = false;
+  $('usersTab').hidden = !me.is_admin; $('homeBox').hidden = !me.is_admin;
+  $('meName').textContent = me.username; $('ver').textContent = info.version;
+  $('maxPages').textContent = info.max_pages; $('obBase').textContent = BASE; $('sBase').textContent = BASE;
+  $('homeUrl').textContent = BASE;
+  buildStatic();
+  pages = await api('/api/pages');
+  if (!pages.length) return showOnboard();
+  const want = Number(localStorage.getItem('enlacespanel-page'));
+  await openPage((pages.find(p => p.id === want) || pages[0]).id);
+}
+function showOnboard() {
+  $('editor').hidden = true; $('onboard').hidden = false; $('tabs').hidden = true;
+  $('pageSel').hidden = true; $('openPage').hidden = true;
+  $('obSlug').value = me.username.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+$('obForm').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const p = await api('/api/pages', {method: 'POST', body: {slug: $('obSlug').value, name: $('obName').value}});
+    pages.push(p); $('onboard').hidden = true; await openPage(p.id); toast('Página creada');
+  } catch (err) { $('obErr').textContent = err.message; }
+};
+async function openPage(id) {
+  const d = await api('/api/pages/' + id);
+  links = d.links; delete d.links; P = d;
+  localStorage.setItem('enlacespanel-page', id);
+  $('editor').hidden = false; $('tabs').hidden = false; $('pageSel').hidden = false; $('openPage').hidden = false;
+  $('pageSel').innerHTML = pages.map(p => `<option value="${p.id}" ${p.id === id ? 'selected' : ''}>/${esc(p.slug)}</option>`).join('');
+  fillPage(); await loadClicks(); renderList(); refreshPreview(true); showTab(tab);
+}
+$('pageSel').onchange = e => openPage(Number(e.target.value));
+function fillPage() {
+  $('openPage').href = '/' + P.slug;
+  $('pageUrl').textContent = BASE + P.slug;
+  $('fName').value = P.name; $('fBio').value = P.bio; $('fLegal').value = P.legal; $('bioCount').textContent = P.bio.length;
+  $('sSlug').value = P.slug; $('sPub').checked = P.published;
+  renderThemes(); renderSocials(); renderQr();
+  if (me.is_admin) api('/api/admin/settings').then(s => { $('sHome').checked = s.home === P.slug; });
+}
+async function savePage(fields, msg) {
+  try {
+    P = await api('/api/pages/' + P.id, {method: 'PUT', body: fields});
+    const i = pages.findIndex(p => p.id === P.id); pages[i] = P;
+    refreshPreview(); if (msg) toast(msg);
+    return true;
+  } catch (err) { toast(err.message); return false; }
+}
+
+// ---------- pestañas ----------
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(t) {
+  tab = t;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('sel', b.dataset.tab === t));
+  document.querySelectorAll('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== t);
+  if (t === 'stats') loadStats();
+  if (t === 'users') loadUsers();
+  setView('edit');
+}
+const setView = v => { document.body.dataset.view = v; $('tView').className = v === 'view' ? 'on' : 'ghost'; $('tEdit').className = v === 'edit' ? 'on' : 'ghost'; };
+$('tView').onclick = () => { setView('view'); refreshPreview(true); };
+$('tEdit').onclick = () => setView('edit');
+
+// ---------- enlaces ----------
+async function loadClicks() {
+  try { const s = await api(`/api/pages/${P.id}/stats?days=30`); clicks = Object.fromEntries(s.links.map(l => [l.id, l.clicks])); }
+  catch (e) { clicks = {}; }
+}
+const fmtDate = t => t ? new Date(t * 1000).toLocaleString('es-ES', {dateStyle: 'short', timeStyle: 'short'}) : '';
+const toLocalInput = t => { if (!t) return ''; const d = new Date(t * 1000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+const fromLocalInput = v => v ? Math.round(new Date(v).getTime() / 1000) : null;
+let editing = null;
+function renderList() {
+  const now = Date.now() / 1000;
+  $('list').innerHTML = links.length ? links.map((l, i) => {
+    if (editing === l.id) return `<li class="edit" data-id="${l.id}">
+      <label>Título</label><input id="eT" value="${esc(l.title)}" maxlength="80">
+      ${l.kind === 'link' ? `<label>Dirección</label><input id="eU" value="${esc(l.url)}" autocapitalize="off">
+      <label>Emoji <span class="opt">(opcional)</span></label><input id="eE" value="${esc(l.emoji)}" maxlength="8" style="max-width:120px">
+      <label class="inline"><input type="checkbox" id="eH" ${l.highlight ? 'checked' : ''}> Destacar (late suavemente para llamar la atención)</label>
+      <div class="row"><label style="flex:1">Se muestra desde <span class="opt">(opcional)</span><input type="datetime-local" id="eS" value="${toLocalInput(l.start_at)}"></label>
+      <label style="flex:1">Hasta <span class="opt">(opcional)</span><input type="datetime-local" id="eX" value="${toLocalInput(l.end_at)}"></label></div>` : ''}
+      <div class="err" id="eErr"></div>
+      <div class="row"><button data-a="ok">Guardar</button><button class="ghost" data-a="cancel">Cancelar</button></div></li>`;
+    const sched = (l.start_at && l.start_at > now) ? `<span class="tag">desde ${fmtDate(l.start_at)}</span>`
+      : (l.end_at && l.end_at <= now) ? '<span class="tag">caducado</span>'
+      : l.end_at ? `<span class="tag">hasta ${fmtDate(l.end_at)}</span>` : '';
+    return `<li draggable="true" data-id="${l.id}" class="${l.enabled ? '' : 'off'} ${l.kind === 'header' ? 'hdr' : ''}">
+      <span class="grip" title="Arrastra para ordenar" aria-hidden="true">⠿</span>
+      <div><div class="t">${l.emoji ? esc(l.emoji) + ' ' : ''}${esc(l.title)}${l.highlight ? '<span class="tag">destacado</span>' : ''}${sched}</div>
+      <div class="u">${l.kind === 'header' ? 'Título de sección' : esc(l.url)}</div></div>
+      <div class="c">${l.kind === 'link' ? `${clicks[l.id] || 0}<small>clics</small>` : ''}</div>
+      <div class="acts">
+       <button class="ghost small" data-a="up" ${i ? '' : 'disabled'} aria-label="Subir">↑</button>
+       <button class="ghost small" data-a="down" ${i < links.length - 1 ? '' : 'disabled'} aria-label="Bajar">↓</button>
+       <button class="ghost small" data-a="toggle">${l.enabled ? 'Ocultar' : 'Mostrar'}</button>
+       <button class="ghost small" data-a="edit">Editar</button>
+       <button class="ghost small" data-a="del">Borrar</button>
+      </div></li>`;
+  }).join('') : '<li class="empty">No tienes enlaces. Añade el primero arriba.</li>';
+}
+$('addForm').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const l = await api(`/api/pages/${P.id}/links`, {method: 'POST', body: {title: $('aTitle').value, url: $('aUrl').value, emoji: $('aEmoji').value}});
+    links.push(l); $('aTitle').value = $('aUrl').value = $('aEmoji').value = ''; $('aErr').textContent = '';
+    renderList(); refreshPreview(); toast('Enlace añadido');
+  } catch (err) { $('aErr').textContent = err.message; }
+};
+$('addHeader').onclick = async () => {
+  const title = $('aTitle').value.trim() || 'Sección';
+  try {
+    const l = await api(`/api/pages/${P.id}/links`, {method: 'POST', body: {kind: 'header', title}});
+    links.push(l); $('aTitle').value = ''; renderList(); refreshPreview(); toast('Título añadido');
+  } catch (err) { $('aErr').textContent = err.message; }
+};
+async function saveOrder() {
+  await api(`/api/pages/${P.id}/order`, {method: 'POST', body: {ids: links.map(l => l.id)}});
+  renderList(); refreshPreview();
+}
+$('list').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const li = b.closest('li'), id = Number(li.dataset.id), i = links.findIndex(l => l.id === id), a = b.dataset.a, l = links[i];
+  try {
+    if (a === 'up' || a === 'down') { const j = i + (a === 'up' ? -1 : 1); [links[i], links[j]] = [links[j], links[i]]; return saveOrder(); }
+    if (a === 'edit') { editing = id; renderList(); $('eT').focus(); return; }
+    if (a === 'cancel') { editing = null; return renderList(); }
+    if (a === 'toggle') { links[i] = await api('/api/links/' + id, {method: 'PUT', body: {enabled: !l.enabled}}); renderList(); refreshPreview(); return; }
+    if (a === 'ok') {
+      const body = {title: $('eT').value};
+      if (l.kind === 'link') Object.assign(body, {url: $('eU').value, emoji: $('eE').value, highlight: $('eH').checked,
+        start_at: fromLocalInput($('eS').value), end_at: fromLocalInput($('eX').value)});
+      try { links[i] = await api('/api/links/' + id, {method: 'PUT', body}); }
+      catch (err) { $('eErr').textContent = err.message; return; }
+      editing = null; renderList(); refreshPreview(); toast('Guardado'); return;
+    }
+    if (a === 'del') {
+      await api('/api/links/' + id, {method: 'DELETE'});
+      lastDeleted = {l, i}; links.splice(i, 1); renderList(); refreshPreview(); toast('Enlace borrado', true);
+    }
+  } catch (err) { toast(err.message); }
+};
+$('undo').onclick = async () => {
+  if (!lastDeleted) return;
+  const {l, i} = lastDeleted; lastDeleted = null;
+  const n = await api(`/api/pages/${P.id}/links`, {method: 'POST', body: l});
+  links.splice(i, 0, n); await saveOrder(); toast('Recuperado');
+};
+// arrastrar y soltar (ordenador)
+let dragId = null;
+$('list').addEventListener('dragstart', e => { const li = e.target.closest('li[data-id]'); if (!li) return; dragId = Number(li.dataset.id); li.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; });
+$('list').addEventListener('dragend', () => { dragId = null; document.querySelectorAll('#list li').forEach(li => li.classList.remove('drag', 'over')); });
+$('list').addEventListener('dragover', e => { const li = e.target.closest('li[data-id]'); if (!li || dragId === null) return; e.preventDefault(); document.querySelectorAll('#list li').forEach(x => x.classList.toggle('over', x === li)); });
+$('list').addEventListener('drop', e => {
+  const li = e.target.closest('li[data-id]'); if (!li || dragId === null) return; e.preventDefault();
+  const to = Number(li.dataset.id); if (to === dragId) return;
+  const from = links.findIndex(l => l.id === dragId), [m] = links.splice(from, 1);
+  links.splice(links.findIndex(l => l.id === to), 0, m); saveOrder();
+});
+
+// ---------- perfil ----------
+const debounceSave = (fields) => { clearTimeout(saveT); saveT = setTimeout(() => savePage(fields, 'Guardado'), 600); };
+$('fName').oninput = e => debounceSave({name: e.target.value});
+$('fBio').oninput = e => { $('bioCount').textContent = e.target.value.length; debounceSave({bio: e.target.value}); };
+$('fLegal').oninput = e => debounceSave({legal: e.target.value});
+$('fFoto').onchange = e => {
+  const file = e.target.files[0]; if (!file) return;
+  const img = new Image();
+  img.onload = async () => {
+    const S = 400, c = document.createElement('canvas'); c.width = c.height = S;
+    const k = Math.max(S / img.width, S / img.height), w = img.width * k, h = img.height * k;
+    c.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+    URL.revokeObjectURL(img.src);
+    try { const r = await api(`/api/pages/${P.id}/avatar`, {method: 'POST', body: {data: c.toDataURL('image/jpeg', .85)}}); P.avatar = r.avatar; refreshPreview(true); toast('Foto actualizada'); }
+    catch (err) { toast(err.message); }
+  };
+  img.onerror = () => toast('Esa imagen no se puede leer');
+  img.src = URL.createObjectURL(file);
+};
+$('noFoto').onclick = async () => { await api(`/api/pages/${P.id}/avatar`, {method: 'POST', body: {data: ''}}); $('fFoto').value = ''; refreshPreview(true); toast('Foto quitada'); };
+
+// ---------- diseño ----------
+const COLOR_NAMES = {bg: 'Fondo', text: 'Texto', card: 'Botones', cardText: 'Texto de botones', accent: 'Detalles'};
+const BUTTONS = {redondo: 'Redondeados', pastilla: 'Pastilla', recto: 'Rectos', borde: 'Solo borde'};
+function buildStatic() {
+  $('period').innerHTML = [[7, '7 días'], [30, '30 días'], [90, '90 días'], [365, '1 año']].map(([d, n]) =>
+    `<button class="ghost small" data-d="${d}">${n}</button>`).join('');
+}
+function renderThemes() {
+  const T = info.themes;
+  $('themes').innerHTML = Object.entries(T).map(([id, t]) =>
+    `<button class="th ${id === P.theme ? 'sel' : ''}" data-th="${id}" style="background:${t.bg};color:${t.text}" aria-pressed="${id === P.theme}">${esc(t.n)}</button>`).join('')
+    + `<button class="th ${P.theme === 'propio' ? 'sel' : ''}" data-th="propio" style="background:conic-gradient(#e4002b,#f97316,#14532d,#38bdf8,#7c3aed,#e4002b);text-shadow:0 1px 2px #000" aria-pressed="${P.theme === 'propio'}">Propio</button>`;
+  $('customBox').hidden = P.theme !== 'propio';
+  const st = P.style || {}, def = {bg: '#ffffff', text: '#111111', card: '#111111', cardText: '#ffffff', accent: '#e4002b'};
+  $('colors').innerHTML = Object.entries(COLOR_NAMES).map(([k, n]) =>
+    `<label><input type="color" data-c="${k}" value="${esc(st[k] || def[k])}"> ${n}</label>`).join('');
+  $('buttons').innerHTML = Object.entries(BUTTONS).map(([k, n]) =>
+    `<button class="${(st.button || 'redondo') === k ? 'on' : 'ghost'} small" data-b="${k}">${n}</button>`).join('');
+}
+$('themes').onclick = async e => { const b = e.target.closest('[data-th]'); if (!b) return; if (await savePage({theme: b.dataset.th})) renderThemes(); };
+$('colors').oninput = e => {
+  const c = e.target.dataset.c; if (!c) return;
+  const style = {...(P.style || {}), [c]: e.target.value};
+  P.style = style; clearTimeout(saveT); saveT = setTimeout(() => savePage({style}), 300);
+};
+$('buttons').onclick = async e => { const b = e.target.closest('[data-b]'); if (!b) return; if (await savePage({style: {...(P.style || {}), button: b.dataset.b}})) renderThemes(); };
+
+// ---------- redes ----------
+let socials = [];
+function renderSocials() {
+  socials = (P.socials || []).map(s => ({...s}));
+  drawSocials();
+}
+function drawSocials() {
+  const opts = Object.entries(info.socials);
+  $('socList').innerHTML = socials.length ? socials.map((s, i) => `<div class="row" style="margin:8px 0" data-i="${i}">
+    <select data-k="net" aria-label="Red" style="max-width:150px;flex:none">${opts.map(([k, n]) => `<option value="${k}" ${k === s.net ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    <input data-k="url" value="${esc(s.url)}" placeholder="https://…" autocapitalize="off" aria-label="Dirección">
+    <button type="button" class="ghost small" data-del="${i}" aria-label="Quitar">✕</button></div>`).join('')
+    : '<p class="empty">Aún no has puesto redes.</p>';
+}
+$('socList').oninput = e => { const row = e.target.closest('[data-i]'); if (row) socials[row.dataset.i][e.target.dataset.k] = e.target.value; };
+$('socList').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { socials.splice(Number(b.dataset.del), 1); drawSocials(); } };
+$('socAdd').onclick = () => { socials.push({net: 'instagram', url: ''}); drawSocials(); };
+$('socSave').onclick = async () => {
+  $('socErr').textContent = '';
+  try { P = await api('/api/pages/' + P.id, {method: 'PUT', body: {socials: socials.filter(s => s.url.trim())}}); renderSocials(); refreshPreview(); toast('Redes guardadas'); }
+  catch (err) { $('socErr').textContent = err.message; }
+};
+
+// ---------- estadísticas ----------
+let days = 30;
+$('period').onclick = e => { const b = e.target.closest('[data-d]'); if (b) { days = Number(b.dataset.d); loadStats(); } };
+async function loadStats() {
+  document.querySelectorAll('#period button').forEach(b => b.className = (Number(b.dataset.d) === days ? 'on' : 'ghost') + ' small');
+  const s = await api(`/api/pages/${P.id}/stats?days=${days}`);
+  $('sViews').textContent = s.views.toLocaleString('es-ES'); $('sClicks').textContent = s.clicks.toLocaleString('es-ES');
+  $('sCtr').textContent = (s.views ? Math.round(s.clicks / s.views * 100) : 0) + ' %';
+  const W = 600, H = 180, pad = 22, n = s.days.length, max = Math.max(1, ...s.days.map(d => Math.max(d.views, d.clicks)));
+  const bw = (W - pad) / n, sc = v => (H - pad) * v / max;
+  let g = `<line x1="${pad}" y1="${H - pad}" x2="${W}" y2="${H - pad}" stroke="currentColor" opacity=".25"/>
+    <text x="0" y="12" font-size="11" fill="currentColor" opacity=".6">${max}</text>`;
+  s.days.forEach((d, i) => {
+    const x = pad + i * bw, w = Math.max(1, bw * .42);
+    g += `<rect x="${x}" y="${H - pad - sc(d.views)}" width="${w}" height="${sc(d.views)}" fill="currentColor" opacity=".85"><title>${d.day}: ${d.views} visitas</title></rect>
+      <rect x="${x + w}" y="${H - pad - sc(d.clicks)}" width="${w}" height="${sc(d.clicks)}" fill="#e4002b"><title>${d.day}: ${d.clicks} clics</title></rect>`;
+  });
+  [0, n - 1].forEach(i => { const d = s.days[i]; g += `<text x="${i ? W : pad}" y="${H - 4}" font-size="11" fill="currentColor" opacity=".6" text-anchor="${i ? 'end' : 'start'}">${d.day.slice(8)}/${d.day.slice(5, 7)}</text>`; });
+  $('chart').innerHTML = g;
+  $('sLinks').innerHTML = s.links.length ? s.links.sort((a, b) => b.clicks - a.clicks).map(l => `<tr><td>${esc(l.title)}</td><td class="n">${l.clicks}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="hint">Todavía no hay enlaces.</td></tr>';
+}
+
+// ---------- QR ----------
+function renderQr() {
+  const q = `color=${encodeURIComponent($('qrDark').value)}&fondo=${encodeURIComponent($('qrLight').value)}`;
+  $('qrImg').src = `/qr/${P.slug}.svg?${q}`;
+  $('qrPng').href = `/qr/${P.slug}.png?${q}`; $('qrPng').download = `qr-${P.slug}.png`;
+  $('qrSvg').href = `/qr/${P.slug}.svg?${q}`; $('qrSvg').download = `qr-${P.slug}.svg`;
+}
+$('qrDark').oninput = $('qrLight').oninput = () => renderQr();
+
+// ---------- ajustes de página ----------
+$('sSlugSave').onclick = async () => {
+  $('sErr').textContent = '';
+  try { P = await api('/api/pages/' + P.id, {method: 'PUT', body: {slug: $('sSlug').value}}); pages[pages.findIndex(p => p.id === P.id)] = P; await openPage(P.id); toast('Dirección cambiada'); }
+  catch (err) { $('sErr').textContent = err.message; }
+};
+$('sPub').onchange = e => savePage({published: e.target.checked}, e.target.checked ? 'Página publicada' : 'Página oculta');
+$('sHome').onchange = async e => {
+  try { await api('/api/admin/settings', {method: 'PUT', body: {home: e.target.checked ? P.slug : ''}}); toast(e.target.checked ? 'Ahora es la portada' : 'Portada quitada'); }
+  catch (err) { toast(err.message); e.target.checked = !e.target.checked; }
+};
+$('newPage').onclick = () => { $('obSlug').value = ''; $('obName').value = ''; $('obErr').textContent = ''; $('editor').hidden = true; $('onboard').hidden = false; $('tabs').hidden = true; };
+$('delPage').onclick = async () => {
+  const typed = prompt(`Para borrar la página escribe su dirección: ${P.slug}`);
+  if (typed !== P.slug) return;
+  await api('/api/pages/' + P.id, {method: 'DELETE'});
+  localStorage.removeItem('enlacespanel-page'); location.reload();
+};
+
+// ---------- cuenta ----------
+$('pwForm').onsubmit = async e => {
+  e.preventDefault(); $('pwErr').textContent = '';
+  try { await api('/api/password', {method: 'POST', body: {old: $('pwOld').value, new: $('pwNew').value}}); $('pwOld').value = $('pwNew').value = ''; toast('Contraseña cambiada'); }
+  catch (err) { $('pwErr').textContent = err.message; }
+};
+$('delAccount').onclick = async () => {
+  const pw = prompt('Esto borra tu cuenta y todas tus páginas. Escribe tu contraseña para confirmarlo:');
+  if (!pw) return;
+  try { await api('/api/account/delete', {method: 'POST', body: {password: pw}}); location.reload(); }
+  catch (err) { toast(err.message); }
+};
+
+// ---------- usuarios (admin) ----------
+const STATUS = {approved: 'Activo', pending: 'Pendiente', disabled: 'Desactivado'};
+async function loadUsers() {
+  const us = await api('/api/admin/users');
+  $('uList').innerHTML = us.map(u => `<tr data-id="${u.id}"><td><b>${esc(u.username)}</b>${u.is_admin ? ' <span class="hint">(admin)</span>' : ''}</td>
+    <td>${STATUS[u.status] || u.status}</td><td class="n">${u.pages}</td><td><div class="row" style="justify-content:flex-end">
+    ${u.status !== 'approved' ? '<button class="small" data-a="approve">Aprobar</button>' : ''}
+    ${u.id !== me.id ? `${u.status === 'approved' ? '<button class="ghost small" data-a="disable">Desactivar</button>' : ''}
+      <button class="ghost small" data-a="${u.is_admin ? 'unadmin' : 'admin'}">${u.is_admin ? 'Quitar admin' : 'Hacer admin'}</button>
+      <button class="danger small" data-a="delete">Borrar</button>` : ''}</div></td></tr>`).join('');
+}
+$('uList').onclick = async e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const id = b.closest('tr').dataset.id, a = b.dataset.a;
+  if (a === 'delete' && !confirm('¿Borrar este usuario y todas sus páginas?')) return;
+  try { await api('/api/admin/users/' + id, {method: 'POST', body: {action: a}}); loadUsers(); toast('Hecho'); }
+  catch (err) { toast(err.message); }
+};
+
+// ---------- compartir ----------
+const AND = window.EnlacesPanelAndroid;  // dentro de la app de Android
+$('copyUrl').onclick = async () => {
+  if (AND) return AND.copy(BASE + P.slug);
+  try { await navigator.clipboard.writeText(BASE + P.slug); toast('Enlace copiado'); } catch (e) { toast(BASE + P.slug); }
+};
+if (AND) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => AND.share(BASE + P.slug, P.name); }
+else if (navigator.share) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => navigator.share({title: P.name, url: BASE + P.slug}).catch(() => {}); }
+
+start().catch(err => { document.body.textContent = 'No se puede conectar con el servidor: ' + err.message; });
+})();

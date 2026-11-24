@@ -1,0 +1,75 @@
+# Compila la app de Android en GitHub y la publica como Release (etiqueta android-vX.Y).
+# Se lanza cuando cambia la versión en android/src/main/AndroidManifest.xml (en main)
+# o a mano desde la pestaña Actions (Run workflow).
+#
+# Firma: con tu clave guardada en los secretos del repo (Settings → Secrets → Actions):
+#   ANDROID_KEYSTORE_B64 (el archivo .jks en base64), ANDROID_KS_PASS y ANDROID_KEY_ALIAS.
+# La clave nunca se sube al repo. Usa siempre la misma: si cambia, la app nueva no se
+# podrá instalar encima de la anterior.
+name: Publicar app Android
+
+on:
+  push:
+    branches: [main]
+    paths: ["android/src/main/AndroidManifest.xml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Compilar y firmar
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KS_PASS }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          export PATH="$BT:$PATH"
+          PLAT=$(ls -d "$ANDROID_HOME"/platforms/android-3[4-9] 2>/dev/null | sort -V | head -1)
+          [ -n "$PLAT" ] && export ANDROID_JAR="$PLAT/android.jar"
+          if [ -z "$KS_B64" ]; then
+            echo "::error::Faltan los secretos de firma (ANDROID_KEYSTORE_B64, ANDROID_KS_PASS, ANDROID_KEY_ALIAS)"
+            exit 1
+          fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/enlacespanel.jks"
+          KEYSTORE="$RUNNER_TEMP/enlacespanel.jks" KS_PASS="$KS_PASS" KEY_ALIAS="$KEY_ALIAS" ./android/build.sh
+          cp android/build/EnlacesPanel-*.apk EnlacesPanel.apk
+
+      - name: Crear la Release con la APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(grep -o 'versionName="[^"]*"' android/src/main/AndroidManifest.xml | cut -d'"' -f2)
+          TAG="android-v$V"
+          {
+            echo "> ⚠️ **Primero necesitas tu propio servidor EnlacesPanel instalado** (en una Raspberry Pi o cualquier Linux con Docker). La app solo sirve para editar tu página desde el móvil; sin servidor no hace nada. Cómo instalar el servidor: https://github.com/pctecnikk/enlacespanel#2-instalar"
+            echo
+            echo "App de EnlacesPanel para Android. Descarga **EnlacesPanel.apk** aquí abajo (en *Assets*), ábrela en el móvil y toca **Instalar**. Si Android pregunta, permite instalar apps de este origen."
+            echo
+            echo "Si ya tienes una versión anterior, se instala encima sin perder nada."
+            echo
+            echo "## Novedades de la $V"
+            awk -v v="## Versión $V" '$0==v{f=1;next} /^## /{f=0} f' android/src/main/res/raw/novedades.md
+            echo
+            echo "Necesita Android 7 o más nuevo. La primera vez pide la dirección de tu servidor: tu dominio (por ejemplo \`enlaces.midominio.com\`) y, si quieres, la de casa (por ejemplo \`192.168.1.50:8092\`)."
+          } > notas.md
+          cat notas.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "La Release $TAG ya existe: se actualizan la APK y el texto"
+            gh release upload "$TAG" EnlacesPanel.apk --clobber
+            gh release edit "$TAG" --notes-file notas.md
+            exit 0
+          fi
+          gh release create "$TAG" EnlacesPanel.apk --target "$GITHUB_SHA" \
+            --title "App Android $V" --notes-file notas.md

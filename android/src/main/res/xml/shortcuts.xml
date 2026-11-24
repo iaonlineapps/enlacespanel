@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="server"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_server">
+        <intent
+            android:action="io.github.pctecnikk.enlacespanel.CHANGE_SERVER"
+            android:targetPackage="io.github.pctecnikk.enlacespanel"
+            android:targetClass="io.github.pctecnikk.enlacespanel.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="novedades"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_novedades">
+        <intent
+            android:action="io.github.pctecnikk.enlacespanel.NOVEDADES"
+            android:targetPackage="io.github.pctecnikk.enlacespanel"
+            android:targetClass="io.github.pctecnikk.enlacespanel.MainActivity" />
+    </shortcut>
+</shortcuts>

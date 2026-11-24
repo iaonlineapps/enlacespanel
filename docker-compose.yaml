@@ -1,0 +1,28 @@
+services:
+  enlacespanel:
+    build: .
+    image: enlacespanel:latest
+    container_name: enlacespanel
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    ports:
+      - "${PORT:-8092}:8092"
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+      - ADMIN_USER=${ADMIN_USER:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ALLOW_REGISTER=${ALLOW_REGISTER:-1}
+      - MAX_PAGES=${MAX_PAGES:-5}
+      - MAX_LINKS=${MAX_LINKS:-100}
+      - STATS_DAYS=${STATS_DAYS:-400}
+      - OWNER_NAME=${OWNER_NAME:-}
+      - CONTACT_EMAIL=${CONTACT_EMAIL:-}
+    volumes:
+      # Todos los datos: config/ (base de datos) y avatars/ (fotos)
+      - ${DATA_DIR:-./data}:/data
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

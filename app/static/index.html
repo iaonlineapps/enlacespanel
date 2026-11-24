@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EnlacesPanel · Panel</title>
+<meta name="theme-color" content="#e4002b">
+<link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-view="edit">
+
+<!-- Entrar / crear cuenta -->
+<section class="auth" id="auth" hidden>
+ <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg></div>
+ <h1>Enlaces<b>Panel</b></h1>
+ <p class="hint" id="authLead">Tu página de enlaces, en tu propio servidor.</p>
+ <form id="authForm">
+  <label for="uName">Usuario</label>
+  <input id="uName" autocomplete="username" autocapitalize="off" required>
+  <label for="uPass">Contraseña</label>
+  <input id="uPass" type="password" autocomplete="current-password" required>
+  <label class="inline" id="acceptRow" hidden><input type="checkbox" id="uAccept"> <span>He leído la <a href="/privacidad" target="_blank">política de privacidad</a></span></label>
+  <div class="err" id="authErr" role="alert"></div>
+  <div class="row"><button type="submit" id="authBtn">Entrar</button><button type="button" class="ghost" id="authSwitch">Crear cuenta</button></div>
+ </form>
+</section>
+
+<!-- Panel -->
+<div id="app" hidden>
+ <header class="top">
+  <a class="brand" href="/panel"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg><span>Enlaces<b>Panel</b></span></a>
+  <select id="pageSel" aria-label="Página que editas"></select>
+  <a class="btn ghost" id="openPage" target="_blank" rel="noopener">Ver mi página ↗</a>
+  <button class="ghost" id="logout">Salir</button>
+ </header>
+ <nav class="tabs" id="tabs" aria-label="Secciones">
+  <button data-tab="links" class="sel">Enlaces</button>
+  <button data-tab="profile">Perfil</button>
+  <button data-tab="design">Diseño</button>
+  <button data-tab="socials">Redes</button>
+  <button data-tab="stats">Estadísticas</button>
+  <button data-tab="qr">QR</button>
+  <button data-tab="settings">Ajustes</button>
+  <button data-tab="account">Cuenta</button>
+  <button data-tab="users" id="usersTab" hidden>Usuarios</button>
+ </nav>
+ <nav class="mtabs" aria-label="Vista">
+  <button id="tEdit" class="on">Editar</button>
+  <button id="tView" class="ghost">Vista previa</button>
+ </nav>
+
+ <!-- Sin páginas todavía -->
+ <section class="auth" id="onboard" hidden>
+  <h1>Tu primera <b>página</b></h1>
+  <p class="hint">Elige la dirección. Por ejemplo, si escribes <b>laura</b>, tu página será <span id="obBase"></span>laura</p>
+  <form id="obForm">
+   <label for="obSlug">Dirección</label>
+   <input id="obSlug" autocapitalize="off" maxlength="32" placeholder="tu-nombre" required>
+   <label for="obName">Nombre que se ve</label>
+   <input id="obName" maxlength="60" placeholder="Laura Méndez">
+   <div class="err" id="obErr" role="alert"></div>
+   <button type="submit">Crear página</button>
+  </form>
+ </section>
+
+ <main class="ed" id="editor" hidden>
+  <section class="editor">
+
+   <div data-pane="links">
+    <h2>Añadir enlace</h2>
+    <form id="addForm">
+     <label for="aTitle">Título</label>
+     <input id="aTitle" placeholder="Mi canal de YouTube" maxlength="80">
+     <label for="aUrl">Dirección</label>
+     <input id="aUrl" placeholder="https://… · mailto:… · tel:…" inputmode="url" autocapitalize="off">
+     <label for="aEmoji">Emoji <span class="opt">(opcional)</span></label>
+     <input id="aEmoji" maxlength="8" placeholder="📸" style="max-width:120px">
+     <div class="err" id="aErr" role="alert"></div>
+     <div class="row"><button type="submit">Añadir enlace</button><button type="button" class="ghost" id="addHeader">Añadir título de sección</button></div>
+    </form>
+    <h2>Tus enlaces</h2>
+    <p class="hint">Arrastra ⠿ para ordenarlos (o usa ↑ ↓). Los clics son de los últimos 30 días.</p>
+    <ul class="links" id="list"></ul>
+   </div>
+
+   <div data-pane="profile" hidden>
+    <h2>Perfil</h2>
+    <label for="fName">Nombre</label>
+    <input id="fName" maxlength="60">
+    <label for="fBio">Bio</label>
+    <textarea id="fBio" rows="3" maxlength="160"></textarea>
+    <p class="hint"><span id="bioCount">0</span>/160</p>
+    <label for="fFoto">Foto</label>
+    <div class="row"><input type="file" id="fFoto" accept="image/png,image/jpeg,image/webp"><button type="button" class="ghost" id="noFoto">Quitar foto</button></div>
+    <p class="hint">La foto se guarda en tu servidor: ninguna web externa ve quién visita tu página.</p>
+    <label for="fLegal">Aviso legal <span class="opt">(opcional; obligatorio si la usas para un negocio)</span></label>
+    <textarea id="fLegal" rows="5" maxlength="3000" placeholder="Titular, NIF, domicilio, correo de contacto…"></textarea>
+    <p class="hint">Sale como «Aviso legal» al pie de tu página. La política de privacidad ya la pone EnlacesPanel.</p>
+   </div>
+
+   <div data-pane="design" hidden>
+    <h2>Tema</h2>
+    <div class="themes" id="themes"></div>
+    <div id="customBox" hidden>
+     <h3>Tus colores</h3>
+     <div class="colors" id="colors"></div>
+    </div>
+    <h2>Botones</h2>
+    <div class="chips" id="buttons"></div>
+   </div>
+
+   <div data-pane="socials" hidden>
+    <h2>Redes sociales</h2>
+    <p class="hint">Salen como botones pequeños debajo de tu bio.</p>
+    <div id="socList"></div>
+    <div class="row" style="margin-top:12px"><button type="button" class="ghost" id="socAdd">+ Añadir red</button><button type="button" id="socSave">Guardar redes</button></div>
+    <div class="err" id="socErr" role="alert"></div>
+   </div>
+
+   <div data-pane="stats" hidden>
+    <h2>Estadísticas</h2>
+    <div class="chips" id="period"></div>
+    <div class="tiles" style="margin-top:12px">
+     <div class="tile"><b id="sViews">0</b><span>visitas</span></div>
+     <div class="tile"><b id="sClicks">0</b><span>clics</span></div>
+     <div class="tile"><b id="sCtr">0 %</b><span>clics por visita</span></div>
+    </div>
+    <svg class="chart" id="chart" viewBox="0 0 600 180" role="img" aria-label="Visitas y clics por día"></svg>
+    <div class="legend"><span><i style="background:var(--ink)"></i>Visitas</span><span><i style="background:var(--red)"></i>Clics</span></div>
+    <h3>Clics por enlace</h3>
+    <table><thead><tr><th>Enlace</th><th class="n">Clics</th></tr></thead><tbody id="sLinks"></tbody></table>
+    <p class="hint">Sin cookies y sin guardar IPs: solo se cuenta cuántas visitas y clics hay cada día.</p>
+   </div>
+
+   <div data-pane="qr" hidden>
+    <h2>Código QR</h2>
+    <div class="qr">
+     <img id="qrImg" alt="Código QR de tu página">
+     <div>
+      <p>Imprímelo en tarjetas, carteles o en el mostrador: al escanearlo se abre tu página.</p>
+      <div class="colors">
+       <label><input type="color" id="qrDark" value="#111111"> Color</label>
+       <label><input type="color" id="qrLight" value="#ffffff"> Fondo</label>
+      </div>
+      <div class="row" style="margin-top:14px"><a class="btn" id="qrPng" download>Descargar PNG</a><a class="btn ghost" id="qrSvg" download>Descargar SVG</a></div>
+      <p class="hint">Si cambias la dirección de la página, vuelve a descargar el QR.</p>
+     </div>
+    </div>
+   </div>
+
+   <div data-pane="settings" hidden>
+    <h2>Esta página</h2>
+    <label for="sSlug">Dirección</label>
+    <div class="row"><span class="hint" id="sBase"></span><input id="sSlug" maxlength="32" autocapitalize="off"><button type="button" id="sSlugSave">Cambiar</button></div>
+    <div class="err" id="sErr" role="alert"></div>
+    <label class="inline"><input type="checkbox" id="sPub"> Publicada (si la desactivas, solo tú la ves en la vista previa)</label>
+    <div id="homeBox" hidden>
+     <label class="inline"><input type="checkbox" id="sHome"> Mostrar esta página en la portada del servidor (<span id="homeUrl"></span>)</label>
+    </div>
+    <h2>Otra página</h2>
+    <p class="hint">Puedes tener varias: una personal, otra para tu negocio… (máximo <span id="maxPages"></span>).</p>
+    <button type="button" class="ghost" id="newPage">+ Crear otra página</button>
+    <h2>Borrar</h2>
+    <button type="button" class="danger" id="delPage">Borrar esta página para siempre</button>
+   </div>
+
+   <div data-pane="account" hidden>
+    <h2>Tu cuenta</h2>
+    <p>Has entrado como <b id="meName"></b>.</p>
+    <h3>Cambiar contraseña</h3>
+    <form id="pwForm">
+     <label for="pwOld">Contraseña actual</label><input id="pwOld" type="password" autocomplete="current-password">
+     <label for="pwNew">Contraseña nueva <span class="opt">(mínimo 8 caracteres)</span></label><input id="pwNew" type="password" autocomplete="new-password">
+     <div class="err" id="pwErr" role="alert"></div>
+     <button type="submit">Cambiar contraseña</button>
+    </form>
+    <h3>Tus datos</h3>
+    <p class="hint">Descarga todo lo que tienes guardado (páginas y enlaces) en un archivo.</p>
+    <a class="btn ghost" href="/api/export" download>Descargar mis datos</a>
+    <h3>Borrar cuenta</h3>
+    <p class="hint">Se borran tu cuenta, tus páginas, tus fotos y tus estadísticas. No se puede deshacer.</p>
+    <button type="button" class="danger" id="delAccount">Borrar mi cuenta</button>
+    <p class="ver">EnlacesPanel <span id="ver"></span> · <a href="/privacidad" target="_blank">Privacidad</a></p>
+   </div>
+
+   <div data-pane="users" hidden>
+    <h2>Usuarios</h2>
+    <table><thead><tr><th>Usuario</th><th>Estado</th><th class="n">Páginas</th><th></th></tr></thead><tbody id="uList"></tbody></table>
+   </div>
+
+  </section>
+
+  <aside class="stage" aria-label="Vista previa">
+   <div class="phone"><iframe class="screen" id="screen" title="Vista previa de tu página"></iframe></div>
+   <p class="url" id="pageUrl"></p>
+   <div class="row"><button type="button" class="ghost small" id="copyUrl">Copiar enlace</button><button type="button" class="ghost small" id="shareUrl" hidden>Compartir</button></div>
+  </aside>
+ </main>
+</div>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" hidden>Deshacer</button></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#e4002b"/><g fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"><path d="M17.5 22.5l5-5"/><path d="M15.2 19.3l-2.6 2.6a4.6 4.6 0 0 0 6.5 6.5l2.6-2.6"/><path d="M24.8 20.7l2.6-2.6a4.6 4.6 0 0 0-6.5-6.5l-2.6 2.6"/></g></symbol></svg>
+<script src="/static/app.js"></script>
+</body>
+</html>
