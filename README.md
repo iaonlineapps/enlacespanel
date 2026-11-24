@@ -119,13 +119,19 @@ Después de cambiar `.env`, vuelve a ejecutar `./install.sh`.
 
 ## 4. Actualizar
 
+Entra por SSH en el servidor y pega esta línea. Sirve desde cualquier carpeta:
+
 ```bash
-cd enlacespanel
-git pull
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/pctecnikk/enlacespanel/main/update.sh | bash
 ```
 
-Tus datos no se tocan: están en `DATA_DIR`.
+Busca dónde está instalado EnlacesPanel, baja el código nuevo, reconstruye, arranca y te dice la
+versión que tenías y la que tienes ahora. Si ya estás en la carpeta de EnlacesPanel, también vale
+`./update.sh`.
+
+Tus datos no se tocan: están en `DATA_DIR`, y tampoco se cambian tu `.env` ni tu
+`docker-compose.yaml`. Si lo instalaste con la imagen ya hecha (CasaOS, Runtipi o
+`image: ghcr.io/...`), el mismo comando baja la imagen nueva.
 
 ## 5. App para Android (APK)
 
