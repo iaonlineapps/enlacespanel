@@ -2,6 +2,11 @@
 
 <!-- Newest version on top. The Spanish list is in NOVEDADES.md. -->
 
+## 0.5.1
+- The Pangolin guide in Settings uses `192.168.1.x` as an example instead of a specific IP (if you
+  open the panel by your home IP, it still shows yours).
+- README with an English section and English screenshots.
+
 ## 0.5.0
 - **Spanish or English:** choose the panel language in Account → Language (or on the sign-in
   screen). The first time it uses your browser language. The Android app follows the same language.

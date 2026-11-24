@@ -37,7 +37,7 @@ jobs:
             echo "## Novedades de la $V"
             awk -v v="## Versión $V" '$0==v{f=1;next} /^## /{f=0} f' android/src/main/res/raw/novedades.md
             echo
-            echo "Necesita Android 7 o más nuevo. La primera vez pide la dirección de tu servidor: tu dominio (por ejemplo \`enlaces.midominio.com\`) y, si quieres, la de casa (por ejemplo \`192.168.1.50:8092\`)."
+            echo "Necesita Android 7 o más nuevo. La primera vez pide la dirección de tu servidor: tu dominio (por ejemplo \`enlaces.midominio.com\`) y, si quieres, la de casa (por ejemplo \`192.168.1.x:8092\`)."
           } > notas.md
           cat notas.md
           if gh release view "$TAG" >/dev/null 2>&1; then
