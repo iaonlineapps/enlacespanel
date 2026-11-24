@@ -66,10 +66,11 @@ no hay que compilar nada.
 ```bash
 git clone https://github.com/pctecnikk/enlacespanel.git
 cd enlacespanel
-./install.sh          # la primera vez crea el archivo .env y se para
-nano .env             # elige dónde guardar los datos (DATA_DIR) y el resto
-./install.sh          # ahora sí: construye y arranca
+./install.sh          # crea la configuración (.env), construye y arranca
 ```
+
+Se instala todo de una vez, sin preguntar nada. Si quieres cambiar dónde se guardan los datos
+o el puerto, edita después el archivo `.env` (`nano .env`) y vuelve a ejecutar `./install.sh`.
 
 Al terminar te dice la dirección: `http://IP-DE-TU-PI:8092/panel`
 
