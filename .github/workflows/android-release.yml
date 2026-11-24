@@ -1,17 +1,14 @@
-# Compila la app de Android en GitHub y la publica como Release (etiqueta android-vX.Y).
-# Se lanza cuando cambia la versión en android/src/main/AndroidManifest.xml (en main)
-# o a mano desde la pestaña Actions (Run workflow).
-#
-# Firma: con tu clave guardada en los secretos del repo (Settings → Secrets → Actions):
-#   ANDROID_KEYSTORE_B64 (el archivo .jks en base64), ANDROID_KS_PASS y ANDROID_KEY_ALIAS.
-# La clave nunca se sube al repo. Usa siempre la misma: si cambia, la app nueva no se
-# podrá instalar encima de la anterior.
+# Publica la app de Android como Release (etiqueta android-vX.Y.Z) cuando cambia
+# android/dist/EnlacesPanel.apk en main, igual que QRPanel. La versión sale de
+# android/src/main/AndroidManifest.xml. La APK se compila y firma con android/build.sh;
+# la clave de firma nunca se sube al repo (usa siempre la misma: si cambia, la app nueva
+# no se podrá instalar encima de la anterior).
 name: Publicar app Android
 
 on:
   push:
     branches: [main]
-    paths: ["android/src/main/AndroidManifest.xml"]
+    paths: ["android/dist/EnlacesPanel.apk"]
   workflow_dispatch:
 
 permissions:
@@ -23,33 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Compilar y firmar
-        env:
-          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          KS_PASS: ${{ secrets.ANDROID_KS_PASS }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          export PATH="$BT:$PATH"
-          PLAT=$(ls -d "$ANDROID_HOME"/platforms/android-3[4-9] 2>/dev/null | sort -V | head -1)
-          [ -n "$PLAT" ] && export ANDROID_JAR="$PLAT/android.jar"
-          if [ -z "$KS_B64" ]; then
-            echo "::error::Faltan los secretos de firma (ANDROID_KEYSTORE_B64, ANDROID_KS_PASS, ANDROID_KEY_ALIAS)"
-            exit 1
-          fi
-          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/enlacespanel.jks"
-          KEYSTORE="$RUNNER_TEMP/enlacespanel.jks" KS_PASS="$KS_PASS" KEY_ALIAS="$KEY_ALIAS" ./android/build.sh
-          cp android/build/EnlacesPanel-*.apk EnlacesPanel.apk
-
       - name: Crear la Release con la APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cp android/dist/EnlacesPanel.apk EnlacesPanel.apk
           V=$(grep -o 'versionName="[^"]*"' android/src/main/AndroidManifest.xml | cut -d'"' -f2)
           TAG="android-v$V"
           {

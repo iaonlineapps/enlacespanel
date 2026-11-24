@@ -179,8 +179,9 @@ firmarla con la tuya usa `KEYSTORE=... KS_PASS=... KEY_ALIAS=... ./android/build
 
 **Sacar una versión nueva:** sube `versionCode` y `versionName` en
 `android/src/main/AndroidManifest.xml` y apunta las novedades arriba del todo en
-`android/src/main/res/raw/novedades.md`. Al subirlo a `main`, GitHub compila la app, la firma
-con la clave guardada en los secretos del repo y crea la Release `android-vX.Y`.
+`android/src/main/res/raw/novedades.md`, compila y firma con tu clave y copia la APK a
+`android/dist/EnlacesPanel.apk`. Al subirlo a `main`, GitHub crea sola la Release
+`android-vX.Y.Z` con la APK y sus novedades.
 
 </details>
 
