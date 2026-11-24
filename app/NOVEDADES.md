@@ -3,6 +3,12 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.4.1
+- **Guía de Pangolin** en Ajustes y en el README: cómo publicar EnlacesPanel con tu dominio
+  desde el VPS (recurso HTTP, la IP de la Raspberry y el puerto 8092, sin la autenticación de
+  Pangolin) y cómo añadir el dominio propio de una página.
+- **Desinstalador** `uninstall.sh`: un comando, con copia de seguridad y preguntas antes de borrar.
+
 ## 0.4.0
 - **Crear usuarios desde el panel** (Usuarios → Crear usuario): nombre, contraseña (o «Generar
   contraseña») y si es administrador. La cuenta queda activa al momento.

@@ -199,11 +199,24 @@ Funciona todo igual que en el navegador.
 ## 6. Ponerla en Internet
 
 Para que la gente vea tu página desde fuera de casa necesitas una dirección pública con HTTPS.
-Las formas más sencillas:
 
-- **Cloudflare Tunnel** (gratis, sin abrir puertos en el router).
-- **Proxy inverso con HTTPS** en tu Pi: Caddy, Nginx Proxy Manager o Traefik, más un dominio o
-  un DNS dinámico (DuckDNS, por ejemplo).
+**A. Pangolin (VPS con tu dominio y Newt en la Pi, sin abrir puertos en el router).**
+
+1. En el panel de Pangolin: **Resources → Add Resource**, tipo **HTTP**. Nombre `EnlacesPanel`
+   y subdominio `enlaces` (queda `enlaces.tudominio.com`).
+2. **Site:** el de tu Raspberry (donde corre Newt). **Destino:** `http`, la IP de la Pi y el
+   puerto `8092` (por ejemplo `192.168.1.50:8092`). Guarda: Pangolin pone el certificado https solo.
+3. En **Authentication** del recurso, **quita la autenticación de Pangolin** (Use Platform SSO
+   apagado). Las páginas de enlaces son públicas y el panel ya pide usuario y contraseña.
+4. **Dominio propio de una página** (por ejemplo `laura.com`): añádelo en Pangolin en **Domains**
+   con los registros DNS que te indique, crea otro recurso con ese dominio y el mismo destino
+   (`192.168.1.50:8092`) y escríbelo en **Ajustes → Dominio propio** de esa página.
+
+**B. Otras formas:** **Cloudflare Tunnel** (gratis, sin abrir puertos) o un **proxy inverso con
+HTTPS** en tu Pi (Caddy, Nginx Proxy Manager o Traefik) más un dominio o un DNS dinámico (DuckDNS,
+por ejemplo). Envía el dominio a la IP de la Pi, puerto `8092`.
+
+En el panel, **Ajustes** tiene estas mismas guías, con la IP y el puerto de tu Raspberry.
 
 Después, en el panel, entra en **Ajustes**:
 

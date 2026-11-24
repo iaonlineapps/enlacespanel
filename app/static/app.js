@@ -68,7 +68,10 @@ async function start() {
   if (!me) return showAuth();
   $('auth').hidden = true; $('app').hidden = false;
   $('usersTab').hidden = !me.is_admin; $('homeBox').hidden = !me.is_admin; $('serverBox').hidden = !me.is_admin;
-  $('sPort').textContent = location.port || (location.protocol === 'https:' ? '443' : '80');
+  // Puerto e IP de la Raspberry para las guías de Pangolin y del proxy (si entras por la IP de casa)
+  const port = location.port || '8092';
+  document.querySelectorAll('.piPort').forEach(e => e.textContent = port);
+  if (/^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\./.test(location.hostname)) document.querySelectorAll('.piIp').forEach(e => e.textContent = location.hostname);
   $('meName').textContent = me.username; $('ver').textContent = info.version;
   $('maxPages').textContent = info.max_pages; $('obBase').textContent = BASE; $('sBase').textContent = BASE;
   $('homeUrl').textContent = BASE;

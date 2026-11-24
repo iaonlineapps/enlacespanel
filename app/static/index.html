@@ -185,10 +185,20 @@
     <label for="sDomain">Dominio</label>
     <div class="row"><input id="sDomain" autocapitalize="off" inputmode="url" placeholder="laura.com"><button type="button" id="sDomainSave">Guardar</button></div>
     <div class="err" id="sDomErr" role="alert"></div>
-    <details class="card"><summary><b>Cómo conectar tu dominio</b></summary>
+    <details class="card"><summary><b>Con Pangolin (dominio por tu VPS)</b></summary>
+     <p class="hint">Si publicas tus apps con Pangolin en un VPS y Newt en esta Raspberry:</p>
+     <ol class="hint">
+      <li>En Pangolin, entra en <b>Resources → Add Resource</b>, tipo <b>HTTP</b>. Nombre <b>EnlacesPanel</b> y subdominio, por ejemplo <b>enlaces</b> (queda <b>enlaces.tudominio.com</b>).</li>
+      <li>Elige el <b>Site</b> de esta Raspberry y pon como destino <b>http</b>, la IP de la Raspberry (<b class="piIp">192.168.1.50</b>) y el puerto <b class="piPort"></b>. Guarda: Pangolin pone el certificado https solo.</li>
+      <li>En ese recurso, en <b>Authentication</b>, <b>quita la autenticación de Pangolin</b> (Use Platform SSO apagado): las páginas de enlaces son públicas y el panel ya tiene su propio usuario y contraseña.</li>
+      <li>El administrador pone <b>https://enlaces.tudominio.com</b> en <b>Dirección pública del servidor</b> (abajo).</li>
+      <li>Para un <b>dominio propio</b> de una página (por ejemplo <b>laura.com</b>): añádelo en Pangolin en <b>Domains</b> (con los registros DNS que te indique), crea otro recurso con ese dominio y el mismo destino (IP de la Raspberry y puerto <b class="piPort"></b>), y escríbelo arriba en Dominio propio.</li>
+     </ol>
+    </details>
+    <details class="card"><summary><b>Con otro proxy (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…)</b></summary>
      <ol class="hint">
       <li>En la web donde compraste el dominio, crea un registro <b>A</b> que apunte a la IP pública de tu casa (o un <b>CNAME</b> a tu DNS dinámico).</li>
-      <li>En tu proxy con HTTPS (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…) añade ese dominio y envíalo a esta Raspberry, al puerto <b><span id="sPort"></span></b>.</li>
+      <li>En tu proxy con HTTPS (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…) añade ese dominio y envíalo a esta Raspberry, al puerto <b class="piPort"></b>.</li>
       <li>Escribe el dominio aquí y pulsa Guardar. El enlace, el botón Compartir y el código QR usarán tu dominio.</li>
      </ol>
     </details>
