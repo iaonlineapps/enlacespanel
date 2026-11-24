@@ -217,7 +217,26 @@ Después, en el panel, entra en **Ajustes**:
 El panel (`/panel`) está protegido con usuario y contraseña. Si solo quieres que se vean las
 páginas, puedes bloquear `/panel` y `/api/` en el proxy para las IPs de fuera.
 
-## 7. Comandos útiles
+## 7. Desinstalar
+
+Un solo comando, desde la carpeta de EnlacesPanel. Pregunta antes de borrar nada y ofrece una
+copia de seguridad:
+
+```bash
+bash uninstall.sh
+```
+
+1. Pide que escribas `DESINSTALAR` para seguir (si no, no toca nada).
+2. Ofrece una **copia de seguridad** de los datos (te dice cuánto ocupan) en un `.tar.gz`.
+3. Para y borra el **contenedor** y la **imagen** de Docker.
+4. Pregunta si borrar también los **datos** (la carpeta `DATA_DIR` del `.env`: tus páginas,
+   enlaces, fotos, usuarios y estadísticas). Hay que escribir `BORRAR` para confirmarlo; si dices
+   que no, se quedan y al reinstalar se usan otra vez.
+5. Pregunta si borrar la **carpeta del programa**.
+
+La app de Android se desinstala como cualquier otra, desde el móvil.
+
+## 8. Comandos útiles
 
 ```bash
 docker compose ps                 # estado
@@ -229,7 +248,7 @@ docker compose down               # parar
 **Copia de seguridad:** copia la carpeta `DATA_DIR` entera (`config/` tiene la base de datos y
 `avatars/` las fotos).
 
-## 8. Privacidad (RGPD)
+## 9. Privacidad (RGPD)
 
 EnlacesPanel está pensado para cumplir el RGPD sin banners de cookies:
 
@@ -243,7 +262,7 @@ EnlacesPanel está pensado para cumplir el RGPD sin banners de cookies:
 - Si usas tu página para un **negocio**, en España la LSSI te obliga a poner un aviso legal
   (titular, NIF, contacto). Tienes un campo para ello en **Perfil → Aviso legal**.
 
-## 9. Seguridad
+## 10. Seguridad
 
 - La app usa **HTTP sin cifrar**. Para publicarla en Internet ponla detrás de HTTPS (ver punto 6).
 - Las contraseñas no se guardan tal cual, sino como hash PBKDF2. Usa contraseñas largas.
@@ -252,7 +271,7 @@ EnlacesPanel está pensado para cumplir el RGPD sin banners de cookies:
 - Las fotos se comprueban (solo JPG, PNG o WebP) y todo el texto se escapa al mostrarlo.
 - Cabeceras de seguridad (CSP, nosniff) y protección contra CSRF en todas las acciones.
 
-## 10. Licencia
+## 11. Licencia
 
 EnlacesPanel se publica con la licencia [PolyForm Noncommercial 1.0.0](LICENSE.md). En resumen (el
 texto que vale es el de la licencia):
