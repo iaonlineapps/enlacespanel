@@ -59,7 +59,7 @@ final class Novedades {
         String v = version(a);
         String seen = prefs.getString(KEY_SEEN_VERSION, null);
         prefs.edit().putString(KEY_SEEN_VERSION, v).apply();
-        if (!firstInstall && !v.equals(seen)) show(a, prefs, "Novedades de la versión " + v);
+        if (!firstInstall && !v.equals(seen)) show(a, prefs, L.t("Novedades de la versión ", "What's new in version ") + v);
     }
 
     static void show(final Activity a, final SharedPreferences prefs, String title) {
@@ -75,8 +75,8 @@ final class Novedades {
         new AlertDialog.Builder(a)
                 .setTitle(title != null ? title : "EnlacesPanel " + version(a))
                 .setView(sv)
-                .setPositiveButton("Cerrar", null)
-                .setNeutralButton("Buscar actualizaciones", new DialogInterface.OnClickListener() {
+                .setPositiveButton(L.t("Cerrar", "Close"), null)
+                .setNeutralButton(L.t("Buscar actualizaciones", "Check for updates"), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int w) { check(a, prefs, true); }
                 })
                 .show();
@@ -84,7 +84,7 @@ final class Novedades {
 
     private static String readChangelog(Activity a) {
         try {
-            InputStream in = a.getResources().openRawResource(R.raw.novedades);
+            InputStream in = a.getResources().openRawResource(L.en() ? R.raw.novedades_en : R.raw.novedades);
             String s = readAll(in);
             in.close();
             return s;
@@ -124,7 +124,7 @@ final class Novedades {
         long now = System.currentTimeMillis();
         if (!manual && now - prefs.getLong(KEY_LAST_CHECK, 0) < CHECK_EVERY_MS) return;
         prefs.edit().putLong(KEY_LAST_CHECK, now).apply();
-        if (manual) Toast.makeText(a, "Buscando actualizaciones…", Toast.LENGTH_SHORT).show();
+        if (manual) Toast.makeText(a, L.t("Buscando actualizaciones…", "Checking for updates…"), Toast.LENGTH_SHORT).show();
         final String current = version(a);
         final Handler main = new Handler(Looper.getMainLooper());
         new Thread(new Runnable() { @Override public void run() {
@@ -143,27 +143,28 @@ final class Novedades {
                     if (!manual && fr.version.equals(prefs.getString(KEY_SKIPPED, null))) return;
                     offer(a, prefs, fr);
                 } else if (manual) {
-                    Toast.makeText(a, ff ? "No se ha podido comprobar. ¿Tienes Internet?"
-                            : "Ya tienes la última versión (" + current + ")", Toast.LENGTH_LONG).show();
+                    Toast.makeText(a, ff ? L.t("No se ha podido comprobar. ¿Tienes Internet?", "Could not check. Are you online?")
+                            : L.t("Ya tienes la última versión (", "You already have the latest version (") + current + ")", Toast.LENGTH_LONG).show();
                 }
             } });
         } }).start();
     }
 
     private static void offer(final Activity a, final SharedPreferences prefs, final Release r) {
-        String msg = "Tienes la " + version(a) + ". Ya está disponible la " + r.version + ".";
+        String msg = L.en() ? "You have " + version(a) + ". Version " + r.version + " is now available."
+                : "Tienes la " + version(a) + ". Ya está disponible la " + r.version + ".";
         if (r.notes != null && !r.notes.trim().isEmpty()) msg += "\n\n" + format(r.notes);
-        msg += "\n\nAl descargarla, ábrela y toca Instalar: se instala encima y no pierdes nada.";
+        msg += L.t("\n\nAl descargarla, ábrela y toca Instalar: se instala encima y no pierdes nada.", "\n\nOnce downloaded, open it and tap Install: it installs over the old one and you lose nothing.");
         new AlertDialog.Builder(a)
-                .setTitle("Hay una versión nueva")
+                .setTitle(L.t("Hay una versión nueva", "A new version is available"))
                 .setMessage(msg)
-                .setPositiveButton("Descargar", new DialogInterface.OnClickListener() {
+                .setPositiveButton(L.t("Descargar", "Download"), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int w) {
                         open(a, r.apkUrl != null ? r.apkUrl : r.pageUrl);
                     }
                 })
-                .setNegativeButton("Más tarde", null)
-                .setNeutralButton("Saltar esta versión", new DialogInterface.OnClickListener() {
+                .setNegativeButton(L.t("Más tarde", "Later"), null)
+                .setNeutralButton(L.t("Saltar esta versión", "Skip this version"), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int w) {
                         prefs.edit().putString(KEY_SKIPPED, r.version).apply();
                     }
@@ -175,7 +176,7 @@ final class Novedades {
         try {
             a.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(a, "No hay navegador para abrir " + url, Toast.LENGTH_LONG).show();
+            Toast.makeText(a, L.t("No hay navegador para abrir ", "No browser to open ") + url, Toast.LENGTH_LONG).show();
         }
     }
 

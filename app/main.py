@@ -412,6 +412,8 @@ async def update_page(page_id: int, request: Request):
             st["button"] = d["style"]["button"]
         if d["style"].get("soc") in ("arriba", "abajo"):
             st["soc"] = d["style"]["soc"]
+        if d["style"].get("lang") in ("es", "en"):
+            st["lang"] = d["style"]["lang"]
         if d["style"].get("anim") in page.ANIMS:
             st["anim"] = d["style"]["anim"]
         f["style"] = page.json_dumps(st)
@@ -652,11 +654,12 @@ async def admin_user(user_id: int, request: Request):
 
 
 @app.get("/api/novedades")
-def novedades(request: Request):
-    """Lista de cambios de la web (app/NOVEDADES.md), para el aviso tras actualizar."""
+def novedades(request: Request, lang: str = "es"):
+    """Lista de cambios de la web (app/NOVEDADES.md o NOVEDADES.en.md), para el aviso tras actualizar."""
     user_or_401(request)
     out, cur = [], None
-    for line in (Path(__file__).parent / "NOVEDADES.md").read_text(encoding="utf-8").splitlines():
+    f = Path(__file__).parent / ("NOVEDADES.en.md" if lang == "en" else "NOVEDADES.md")
+    for line in f.read_text(encoding="utf-8").splitlines():
         if line.startswith("## "):
             cur = {"version": line[3:].strip(), "items": []}
             out.append(cur)
@@ -719,12 +722,25 @@ def robots():
 
 @app.get("/panel", response_class=HTMLResponse)
 def panel():
-    return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+    # ?v=VERSION en los archivos del panel: al actualizar, el navegador no usa los viejos
+    html_ = (STATIC / "index.html").read_text(encoding="utf-8")
+    for f in ("style.css", "i18n.js", "app.js"):
+        html_ = html_.replace(f"/static/{f}", f"/static/{f}?v={VERSION}")
+    return HTMLResponse(html_, headers={"Cache-Control": "no-cache"})
+
+
+def req_lang(request: Request) -> str:
+    """Idioma de quien visita: ?lang=en o el de su navegador (español si empieza por es)."""
+    q = request.query_params.get("lang", "")
+    if q in ("es", "en"):
+        return q
+    al = (request.headers.get("accept-language") or "es").strip().lower()
+    return "es" if not al or al.startswith("es") or al.startswith("*") else "en"
 
 
 @app.get("/privacidad", response_class=HTMLResponse)
-def privacy():
-    return page.render_privacy()
+def privacy(request: Request):
+    return page.render_privacy(req_lang(request))
 
 
 @app.get("/a/{name}")
@@ -742,12 +758,12 @@ def is_bot(request: Request) -> bool:
 def go(link_id: int, request: Request, vista: int = 0):
     l = db.q1("SELECT l.*, p.published, p.id pid FROM links l JOIN pages p ON p.id=l.page_id WHERE l.id=?", link_id)
     if not l or l["kind"] != "link" or not l["enabled"]:
-        return HTMLResponse(page.render_404(), status_code=404)
+        return HTMLResponse(page.render_404(req_lang(request)), status_code=404)
     if not l["published"]:
         u = db.session_user(request.cookies.get(COOKIE, ""))
         owner = db.q1("SELECT user_id FROM pages WHERE id=?", l["pid"])["user_id"]
         if not (vista and u and (u["id"] == owner or u["is_admin"])):
-            return HTMLResponse(page.render_404(), status_code=404)
+            return HTMLResponse(page.render_404(req_lang(request)), status_code=404)
     if not vista and not is_bot(request):
         db.count(l["pid"], l["id"])
     return RedirectResponse(l["url"], status_code=302)
@@ -755,11 +771,11 @@ def go(link_id: int, request: Request, vista: int = 0):
 
 def _show(request: Request, p, preview: bool):
     if not p:
-        return HTMLResponse(page.render_404(), status_code=404)
+        return HTMLResponse(page.render_404(req_lang(request)), status_code=404)
     if not p["published"]:
         u = db.session_user(request.cookies.get(COOKIE, ""))
         if not (preview and u and (u["id"] == p["user_id"] or u["is_admin"])):
-            return HTMLResponse(page.render_404(), status_code=404)
+            return HTMLResponse(page.render_404(req_lang(request)), status_code=404)
     if not preview and not is_bot(request) and request.method == "GET":
         db.count(p["id"], 0)
     return HTMLResponse(page.render(p, preview, base_url(request)),
@@ -782,10 +798,10 @@ def home(request: Request, vista: int = 0):
 
 
 @app.get("/{slug}/aviso-legal", response_class=HTMLResponse)
-def legal(slug: str):
+def legal(slug: str, request: Request):
     p = db.q1("SELECT * FROM pages WHERE slug=?", slug.lower())
     if not p or not p["published"] or not (p["legal"] or "").strip():
-        return HTMLResponse(page.render_404(), status_code=404)
+        return HTMLResponse(page.render_404(req_lang(request)), status_code=404)
     return page.render_legal(p)
 
 

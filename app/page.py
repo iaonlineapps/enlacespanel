@@ -77,9 +77,24 @@ def visible_links(page_id: int):
             if (not l["start_at"] or l["start_at"] <= now) and (not l["end_at"] or l["end_at"] > now)]
 
 
-def _head(title, desc, t, extra=""):
+# Textos fijos de la página pública en inglés (el idioma se elige en Ajustes de cada página)
+EN = {"Aún no hay enlaces": "No links yet", "Hecho con": "Made with", "Privacidad": "Privacy", "Aviso legal": "Legal notice",
+      "Vista previa: esta página no está publicada": "Preview: this page is not published", "Redes y contacto": "Socials and contact",
+      "← Volver": "← Back", "Correo": "Email", "Teléfono": "Phone", "No encontrada": "Not found"}
+SOCIALS_EN = {"email": "Email", "phone": "Phone", "web": "Website"}
+
+
+def tx(s: str, lang: str) -> str:
+    return EN.get(s, s) if lang == "en" else s
+
+
+def page_lang(p) -> str:
+    return "en" if db.jload(p["style"], {}).get("lang") == "en" else "es"
+
+
+def _head(title, desc, t, extra="", lang="es"):
     solid = t.get("solid") or (t["bg"] if t["bg"].startswith("#") else "#111")
-    return f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+    return f"""<!DOCTYPE html><html lang="{lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
 <meta name="theme-color" content="{esc(solid)}">{extra}
@@ -91,6 +106,8 @@ def _head(title, desc, t, extra=""):
 
 def render(p, preview=False, base="") -> str:
     t = theme_of(p)
+    lang = page_lang(p)
+    q = "?lang=en" if lang == "en" else ""
     slug = p["slug"]
     name = p["name"] or slug
     av = (f'<img src="/a/{esc(p["avatar"])}" alt="" width="96" height="96">' if p["avatar"]
@@ -115,40 +132,62 @@ def render(p, preview=False, base="") -> str:
         n += 1
         items.append(f'<a class="{cls}" style="--i:{n}" href="{href}" rel="noopener nofollow">{em}<span class="tx">{esc(l["title"])}</span></a>')
     if not items:
-        items.append('<p class="none">Aún no hay enlaces</p>')
+        items.append(f'<p class="none">{tx("Aún no hay enlaces", lang)}</p>')
     socials = ""
     soc = [s for s in db.jload(p["socials"], []) if isinstance(s, dict) and s.get("url")]
     if soc:
-        socials = '<nav class="soc" aria-label="Redes y contacto">' + "".join(
-            f'<a href="{esc(s["url"])}" rel="noopener nofollow me" aria-label="{esc(SOCIALS.get(s.get("net"), "Web"))}" '
-            f'title="{esc(SOCIALS.get(s.get("net"), "Web"))}" style="--i:{i}">{ICONS.get(s.get("net"), ICONS["web"])}</a>'
+        sname = lambda n: (SOCIALS_EN.get(n) if lang == "en" else None) or SOCIALS.get(n, "Web")
+        socials = f'<nav class="soc" aria-label="{tx("Redes y contacto", lang)}">' + "".join(
+            f'<a href="{esc(s["url"])}" rel="noopener nofollow me" aria-label="{esc(sname(s.get("net")))}" '
+            f'title="{esc(sname(s.get("net")))}" style="--i:{i}">{ICONS.get(s.get("net"), ICONS["web"])}</a>'
             for i, s in enumerate(soc)) + "</nav>"
-    legal = f' · <a href="/{esc(slug)}/aviso-legal">Aviso legal</a>' if (p["legal"] or "").strip() else ""
+    legal = f' · <a href="/{esc(slug)}/aviso-legal">{tx("Aviso legal", lang)}</a>' if (p["legal"] or "").strip() else ""
     outline = (" outline" if t["outline"] else "") + f" anim-{t['anim']}"
-    banner = '<div class="draft">Vista previa: esta página no está publicada</div>' if not p["published"] else ""
+    banner = f'<div class="draft">{tx("Vista previa: esta página no está publicada", lang)}</div>' if not p["published"] else ""
     if t.get("glass"):
         outline += " glass"
     if t.get("glow"):
         outline += " glow"
     if not t["bg"].startswith("#"):
         outline += " grad"
-    return _head(name, p["bio"] or name, t, og) + f"""<body class="pg{outline}">{banner}<main class="lp">
+    return _head(name, p["bio"] or name, t, og, lang) + f"""<body class="pg{outline}">{banner}<main class="lp">
 <div class="av">{av}</div><h1 class="nm">{esc(name)}</h1>{f'<p class="bio">{esc(p["bio"])}</p>' if p["bio"] else ''}
 {socials if t["socpos"] == "arriba" else ""}<div class="links">{''.join(items)}</div>
 {socials if t["socpos"] != "arriba" else ""}
-<footer class="foot">{LOGO}<span>Hecho con <a href="https://github.com/pctecnikk/enlacespanel" rel="noopener">EnlacesPanel</a></span></footer>
-<p class="legal-l"><a href="/privacidad">Privacidad</a>{legal}</p>
+<footer class="foot">{LOGO}<span>{tx("Hecho con", lang)} <a href="https://github.com/pctecnikk/enlacespanel" rel="noopener">EnlacesPanel</a></span></footer>
+<p class="legal-l"><a href="/privacidad{q}">{tx("Privacidad", lang)}</a>{legal}</p>
 </main></body></html>"""
 
 
 def render_legal(p) -> str:
     t = theme_of(p)
+    lang = page_lang(p)
     body = "".join(f"<p>{esc(par)}</p>" for par in (p["legal"] or "").split("\n") if par.strip())
-    return _head(f"Aviso legal · {p['name'] or p['slug']}", "Aviso legal", t) + f"""<body class="pg"><main class="lp doc">
-<h1>Aviso legal</h1>{body}<p><a href="/{esc(p['slug'])}">← Volver</a></p></main></body></html>"""
+    title = tx("Aviso legal", lang)
+    return _head(f"{title} · {p['name'] or p['slug']}", title, t, lang=lang) + f"""<body class="pg"><main class="lp doc">
+<h1>{title}</h1>{body}<p><a href="/{esc(p['slug'])}">{tx("← Volver", lang)}</a></p></main></body></html>"""
 
 
-def render_privacy() -> str:
+def render_privacy(lang="es") -> str:
+    t = dict(THEMES["papel"], radius="14px")
+    if lang == "en":
+        who = esc(OWNER_NAME) or "the person who runs this server"
+        mail = f' by writing to <a href="mailto:{esc(CONTACT_EMAIL)}">{esc(CONTACT_EMAIL)}</a>' if CONTACT_EMAIL else ""
+        return _head("Privacy", "Privacy policy", t, lang="en") + f"""<body class="pg"><main class="lp doc">
+<h1>Privacy</h1>
+<p><b>Data controller:</b> {who}. You can exercise your rights of access, rectification, erasure, objection,
+restriction and portability{mail}. You can also complain to your data protection authority.</p>
+<p><b>If you only visit a page:</b> we use no cookies or trackers, we load nothing from other websites
+(no fonts, analytics or ads) and we do not store your IP or your browser. We only add 1 to a daily counter
+of visits and clicks, with no data that identifies you. Those counters are deleted automatically over time.</p>
+<p><b>If you have an account to edit pages:</b> we store your username, your encrypted password (hash)
+and what you publish (name, bio, photo and links). We use a single technical cookie to keep you signed in;
+it is needed for the service, so it does not ask for consent. You can delete your pages and your
+account whenever you want from the panel.</p>
+<p><b>Legal basis:</b> your consent when creating the account and the legitimate interest in keeping the service secure.
+We do not share data with third parties. The data is stored on this server.</p>
+<p><b>When you tap a link</b> you go to another website, which has its own privacy policy.</p>
+<p><a href="/">← Back</a></p></main></body></html>"""
     t = dict(THEMES["papel"], radius="14px")
     who = esc(OWNER_NAME) or "la persona que administra este servidor"
     mail = f' escribiendo a <a href="mailto:{esc(CONTACT_EMAIL)}">{esc(CONTACT_EMAIL)}</a>' if CONTACT_EMAIL else ""
@@ -169,8 +208,12 @@ No cedemos datos a terceros. Los datos se guardan en el propio servidor.</p>
 <p><a href="/">← Volver</a></p></main></body></html>"""
 
 
-def render_404() -> str:
+def render_404(lang="es") -> str:
     t = dict(THEMES["papel"], radius="14px")
+    if lang == "en":
+        return _head("Not found", "", t, lang="en") + """<body class="pg"><main class="lp doc">
+<h1>This page does not exist</h1><p>The link may be mistyped or the page may have been deleted.</p>
+</main></body></html>"""
     return _head("No encontrada", "", t) + """<body class="pg"><main class="lp doc">
 <h1>Esta página no existe</h1><p>Puede que el enlace esté mal escrito o que la página se haya borrado.</p>
 </main></body></html>"""

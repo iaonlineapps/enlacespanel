@@ -111,7 +111,7 @@ function fillPage() {
   $('sBase').textContent = srv; $('obBase').textContent = srv;
   $('fName').value = P.name; $('fBio').value = P.bio; $('fLegal').value = P.legal; $('bioCount').textContent = P.bio.length;
   $('sSlug').value = P.slug; $('sPub').checked = P.published;
-  renderThemes(); renderSocials(); renderQr();
+  renderThemes(); renderSocials(); renderQr(); paintPageLang();
   if (me.is_admin) api('/api/admin/settings').then(s => {
     $('sHome').checked = s.home === P.slug; $('sPublic').value = s.public_url || ''; $('sReg').checked = s.allow_register;
   });
@@ -144,7 +144,7 @@ async function loadClicks() {
   try { const s = await api(`/api/pages/${P.id}/stats?days=30`); clicks = Object.fromEntries(s.links.map(l => [l.id, l.clicks])); }
   catch (e) { clicks = {}; }
 }
-const fmtDate = t => t ? new Date(t * 1000).toLocaleString('es-ES', {dateStyle: 'short', timeStyle: 'short'}) : '';
+const fmtDate = t => t ? new Date(t * 1000).toLocaleString(LANG === 'en' ? 'en-GB' : 'es-ES', {dateStyle: 'short', timeStyle: 'short'}) : '';
 const toLocalInput = t => { if (!t) return ''; const d = new Date(t * 1000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 const fromLocalInput = v => v ? Math.round(new Date(v).getTime() / 1000) : null;
 let editing = null;
@@ -196,8 +196,8 @@ function renderList() {
       : l.end_at ? `<span class="tag">hasta ${fmtDate(l.end_at)}</span>` : '';
     return `<li draggable="true" data-id="${l.id}" class="${l.enabled ? '' : 'off'} ${l.kind === 'header' ? 'hdr' : ''}">
       <span class="grip" title="Arrastra para ordenar" aria-hidden="true">⠿</span>
-      <div><div class="t">${l.kind === 'link' && icon(l) ? `<span class="icprev sm" aria-hidden="true">${icon(l)}</span>` : ''}${esc(l.title)}${l.highlight ? '<span class="tag">destacado</span>' : ''}${sched}</div>
-      <div class="u">${l.kind === 'header' ? 'Título de sección' : esc(l.url)}</div></div>
+      <div><div class="t">${l.kind === 'link' && icon(l) ? `<span class="icprev sm" aria-hidden="true">${icon(l)}</span>` : ''}<span translate="no">${esc(l.title)}</span>${l.highlight ? '<span class="tag">destacado</span>' : ''}${sched}</div>
+      <div class="u">${l.kind === 'header' ? 'Título de sección' : `<span translate="no">${esc(l.url)}</span>`}</div></div>
       <div class="c">${l.kind === 'link' ? `${clicks[l.id] || 0}<small>clics</small>` : ''}</div>
       <div class="acts">
        <button class="ghost small" data-a="up" ${i ? '' : 'disabled'} aria-label="Subir">↑</button>
@@ -376,7 +376,7 @@ async function loadStats() {
   });
   [0, n - 1].forEach(i => { const d = s.days[i]; g += `<text x="${i ? W : pad}" y="${H - 4}" font-size="11" fill="currentColor" opacity=".6" text-anchor="${i ? 'end' : 'start'}">${d.day.slice(8)}/${d.day.slice(5, 7)}</text>`; });
   $('chart').innerHTML = g;
-  $('sLinks').innerHTML = s.links.length ? s.links.sort((a, b) => b.clicks - a.clicks).map(l => `<tr><td>${esc(l.title)}</td><td class="n">${l.clicks}</td></tr>`).join('')
+  $('sLinks').innerHTML = s.links.length ? s.links.sort((a, b) => b.clicks - a.clicks).map(l => `<tr><td translate="no">${esc(l.title)}</td><td class="n">${l.clicks}</td></tr>`).join('')
     : '<tr><td colspan="2" class="hint">Todavía no hay enlaces.</td></tr>';
 }
 
@@ -417,7 +417,7 @@ $('sReg').onchange = async e => {
 $('obCancel').onclick = () => { $('onboard').hidden = true; $('editor').hidden = false; $('tabs').hidden = false; };
 $('newPage').onclick = () => { $('obSlug').value = ''; $('obName').value = ''; $('obErr').textContent = ''; $('editor').hidden = true; $('onboard').hidden = false; $('tabs').hidden = true; };
 $('delPage').onclick = async () => {
-  const typed = prompt(`Para borrar la página escribe su dirección: ${P.slug}`);
+  const typed = prompt(t(`Para borrar la página escribe su dirección: ${P.slug}`));
   if (typed !== P.slug) return;
   await api('/api/pages/' + P.id, {method: 'DELETE'});
   localStorage.removeItem('enlacespanel-page'); location.reload();
@@ -430,7 +430,7 @@ $('pwForm').onsubmit = async e => {
   catch (err) { $('pwErr').textContent = err.message; }
 };
 $('delAccount').onclick = async () => {
-  const pw = prompt('Esto borra tu cuenta y todas tus páginas. Escribe tu contraseña para confirmarlo:');
+  const pw = prompt(t('Esto borra tu cuenta y todas tus páginas. Escribe tu contraseña para confirmarlo:'));
   if (!pw) return;
   try { await api('/api/account/delete', {method: 'POST', body: {password: pw}}); location.reload(); }
   catch (err) { toast(err.message); }
@@ -440,7 +440,7 @@ $('delAccount').onclick = async () => {
 const STATUS = {approved: 'Activo', pending: 'Pendiente', disabled: 'Desactivado'};
 async function loadUsers() {
   const us = await api('/api/admin/users');
-  $('uList').innerHTML = us.map(u => `<tr data-id="${u.id}"><td><b>${esc(u.username)}</b>${u.is_admin ? ' <span class="hint">(admin)</span>' : ''}</td>
+  $('uList').innerHTML = us.map(u => `<tr data-id="${u.id}"><td><b translate="no">${esc(u.username)}</b>${u.is_admin ? ' <span class="hint">(admin)</span>' : ''}</td>
     <td>${STATUS[u.status] || u.status}</td><td class="n">${u.pages}</td><td><div class="row" style="justify-content:flex-end">
     ${u.status !== 'approved' ? '<button class="small" data-a="approve">Aprobar</button>' : ''}
     ${u.id !== me.id ? `${u.status === 'approved' ? '<button class="ghost small" data-a="disable">Desactivar</button>' : ''}
@@ -462,9 +462,9 @@ $('nuForm').onsubmit = async e => {
 $('uList').onclick = async e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
   const id = b.closest('tr').dataset.id, a = b.dataset.a, body = {action: a};
-  if (a === 'delete' && !confirm('¿Borrar este usuario y todas sus páginas?')) return;
+  if (a === 'delete' && !confirm(t('¿Borrar este usuario y todas sus páginas?'))) return;
   if (a === 'password') {
-    const pw = prompt('Nueva contraseña para este usuario (mínimo 8 caracteres):', genPass());
+    const pw = prompt(t('Nueva contraseña para este usuario (mínimo 8 caracteres):'), genPass());
     if (!pw) return; body.password = pw;
   }
   try { await api('/api/admin/users/' + id, {method: 'POST', body}); loadUsers(); toast(a === 'password' ? 'Contraseña cambiada' : 'Hecho'); }
@@ -525,10 +525,14 @@ function paintVersions() {
   $('vChip').textContent = 'v' + info.version;
   $('verLine').innerHTML = `<b>Web ${esc(info.version)}</b>` + (av ? ` · <b>App ${esc(av)}</b>`
     : ' · <a href="https://github.com/pctecnikk/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App de Android</a>');
+  $('pFoot').innerHTML = `EnlacesPanel · Web ${esc(info.version)}` + (av ? ` · App Android ${esc(av)}`
+    : ` · <a href="https://github.com/pctecnikk/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App Android</a>`)
+    + ` · <a href="#" id="footNews">Novedades</a> · <a href="/privacidad${LANG === 'en' ? '?lang=en' : ''}" target="_blank">Privacidad</a>`;
+  $('footNews').onclick = e => { e.preventDefault(); showNews(); };
   $('appNewsBtn').hidden = !(AND && AND.news); $('appCheckBtn').hidden = !(AND && AND.checkUpdate);
 }
 async function showNews(since) {
-  const d = await api('/api/novedades');
+  const d = await api('/api/novedades?lang=' + LANG);
   const list = since ? d.novedades.filter(n => newer(n.version, since)) : d.novedades;
   if (!list.length) return;
   $('newsTitle').textContent = since ? `EnlacesPanel se ha actualizado a la ${d.version}` : 'Novedades de EnlacesPanel';
@@ -548,6 +552,19 @@ $('newsClose').onclick = () => $('news').close();
 $('appNewsBtn').onclick = () => AND.news();
 $('appCheckBtn').onclick = () => AND.checkUpdate();
 
+// ---------- idioma ----------
+const ANDL = window.EnlacesPanelAndroid;  // la app de Android usa el mismo idioma que el panel
+document.querySelectorAll('[data-lang]').forEach(b => {
+  b.classList.toggle('on', b.dataset.lang === LANG);
+  b.onclick = () => { if (ANDL && ANDL.setLang) try { ANDL.setLang(b.dataset.lang); } catch (e) {} setLang(b.dataset.lang); };
+});
+if (ANDL && ANDL.setLang) try { ANDL.setLang(LANG); } catch (e) {}
+function paintPageLang() {
+  const pl = (P.style && P.style.lang) || 'es';
+  document.querySelectorAll('[data-pl]').forEach(b => b.className = (b.dataset.pl === pl ? 'on' : 'ghost') + ' small');
+}
+$('pLang').onclick = async e => { const b = e.target.closest('[data-pl]'); if (!b) return; if (await savePage({style: {...(P.style || {}), lang: b.dataset.pl}}, 'Guardado')) paintPageLang(); };
+
 // ---------- compartir ----------
 const AND = window.EnlacesPanelAndroid;  // dentro de la app de Android
 $('copyUrl').onclick = async () => {
@@ -557,5 +574,5 @@ $('copyUrl').onclick = async () => {
 if (AND) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => AND.share(pageUrl(), P.name); }
 else if (navigator.share) { $('shareUrl').hidden = false; $('shareUrl').onclick = () => navigator.share({title: P.name, url: pageUrl()}).catch(() => {}); }
 
-start().catch(err => { document.body.textContent = 'No se puede conectar con el servidor: ' + err.message; });
+start().catch(err => { document.body.textContent = t('No se puede conectar con el servidor') + ': ' + err.message; });
 })();

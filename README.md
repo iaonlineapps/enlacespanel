@@ -5,11 +5,13 @@
 Tu página de enlaces ("link in bio") en tu propio servidor, **gratis y sin cuotas**. Una sola
 dirección para poner en Instagram, TikTok o tu tarjeta de visita, con todos tus enlaces dentro.
 Pensado para una Raspberry Pi 3, 4 o 5 (funciona en cualquier Linux con Docker). Muy ligero
-(unos 50 MB de RAM), en español, con modo claro/oscuro y **sin cookies ni rastreadores** para
+(unos 50 MB de RAM), en español y en inglés, con modo claro/oscuro y **sin cookies ni rastreadores** para
 quien visita tu página.
 
-> **Idiomas / Languages:** ahora EnlacesPanel está en español. El inglés llegará pronto.
-> EnlacesPanel is in Spanish right now. English is coming soon.
+> **Idiomas / Languages:** español e inglés. El panel usa el idioma de tu navegador y se cambia
+> en Cuenta → Idioma; cada página elige el suyo en Ajustes. La app de Android sigue al panel.
+> Spanish and English. The panel follows your browser language and can be changed in
+> Account → Language; each page picks its own in Settings. The Android app follows the panel.
 
 **Qué incluye:**
 

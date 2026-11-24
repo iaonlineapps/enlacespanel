@@ -15,23 +15,24 @@
 <!-- Entrar / crear cuenta -->
 <section class="auth" id="auth" hidden>
  <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg></div>
- <h1>Enlaces<b>Panel</b></h1>
+ <h1 translate="no">Enlaces<b>Panel</b></h1>
  <p class="hint" id="authLead">Tu página de enlaces, en tu propio servidor.</p>
  <form id="authForm">
   <label for="uName">Usuario</label>
   <input id="uName" autocomplete="username" autocapitalize="off" required>
   <label for="uPass">Contraseña</label>
   <input id="uPass" type="password" autocomplete="current-password" required>
-  <label class="inline" id="acceptRow" hidden><input type="checkbox" id="uAccept"> <span>He leído la <a href="/privacidad" target="_blank">política de privacidad</a></span></label>
+  <label class="inline" id="acceptRow" hidden><input type="checkbox" id="uAccept"> <span data-i18n="accept">He leído la <a href="/privacidad" target="_blank">política de privacidad</a></span></label>
   <div class="err" id="authErr" role="alert"></div>
   <div class="row"><button type="submit" id="authBtn">Entrar</button><button type="button" class="ghost" id="authSwitch">Crear cuenta</button></div>
  </form>
+ <div class="seg lang" role="group" aria-label="Idioma"><button type="button" data-lang="es">Español</button><button type="button" data-lang="en">English</button></div>
 </section>
 
 <!-- Panel -->
 <div id="app" hidden>
  <header class="top">
-  <a class="brand" href="/panel"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg><span>Enlaces<b>Panel</b></span></a>
+  <a class="brand" href="/panel"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg><span translate="no">Enlaces<b>Panel</b></span></a>
   <select id="pageSel" aria-label="Página que editas"></select>
   <div class="seg" id="devSel" role="group" aria-label="Ver como">
    <button type="button" data-dev="movil" class="on" title="Ver como en un móvil">Móvil</button>
@@ -60,8 +61,8 @@
 
  <!-- Sin páginas todavía -->
  <section class="auth" id="onboard" hidden>
-  <h1>Otra <b>página</b></h1>
-  <p class="hint">Elige la dirección. Por ejemplo, si escribes <b>tienda</b>, la página será <span id="obBase"></span>tienda</p>
+  <h1 data-i18n="obTitle">Otra <b>página</b></h1>
+  <p class="hint" data-i18n="obHint">Elige la dirección. Por ejemplo, si escribes <b>tienda</b>, la página será <span id="obBase"></span>tienda</p>
   <form id="obForm">
    <label for="obSlug">Dirección</label>
    <input id="obSlug" autocapitalize="off" maxlength="32" placeholder="tu-nombre" required>
@@ -171,34 +172,37 @@
 
    <div data-pane="settings" hidden>
     <h2>Esta página</h2>
-    <p>Tu página se ve en: <a id="sUrl" target="_blank" rel="noopener"></a></p>
+    <p data-i18n="seenAt">Tu página se ve en: <a id="sUrl" target="_blank" rel="noopener"></a></p>
     <label for="sSlug">Dirección dentro del servidor</label>
     <div class="row"><span class="hint" id="sBase"></span><input id="sSlug" maxlength="32" autocapitalize="off"><button type="button" id="sSlugSave">Cambiar</button></div>
     <div class="err" id="sErr" role="alert"></div>
     <label class="inline"><input type="checkbox" id="sPub"> Publicada (si la desactivas, solo tú la ves en la vista previa)</label>
+    <label>Idioma de la página</label>
+    <div class="chips" id="pLang"><button type="button" class="ghost small" data-pl="es">Español</button><button type="button" class="ghost small" data-pl="en">English</button></div>
+    <p class="hint">Los textos fijos de tu página (pie, privacidad, aviso legal) salen en este idioma.</p>
     <div id="homeBox" hidden>
-     <label class="inline"><input type="checkbox" id="sHome"> Mostrar esta página en la portada del servidor (<span id="homeUrl"></span>)</label>
+     <label class="inline" data-i18n="home"><input type="checkbox" id="sHome"> Mostrar esta página en la portada del servidor (<span id="homeUrl"></span>)</label>
     </div>
 
     <h2>Dominio propio <span class="opt">(opcional)</span></h2>
-    <p class="hint">Si tienes un dominio para esta página (por ejemplo <b>laura.com</b> o <b>enlaces.laura.com</b>), escríbelo aquí y tu página se abrirá directamente en él, sin nada detrás.</p>
+    <p class="hint" data-i18n="domHint">Si tienes un dominio para esta página (por ejemplo <b>laura.com</b> o <b>enlaces.laura.com</b>), escríbelo aquí y tu página se abrirá directamente en él, sin nada detrás.</p>
     <label for="sDomain">Dominio</label>
     <div class="row"><input id="sDomain" autocapitalize="off" inputmode="url" placeholder="laura.com"><button type="button" id="sDomainSave">Guardar</button></div>
     <div class="err" id="sDomErr" role="alert"></div>
     <details class="card"><summary><b>Con Pangolin (dominio por tu VPS)</b></summary>
      <p class="hint">Si publicas tus apps con Pangolin en un VPS y Newt en esta Raspberry:</p>
      <ol class="hint">
-      <li>En Pangolin, entra en <b>Resources → Add Resource</b>, tipo <b>HTTP</b>. Nombre <b>EnlacesPanel</b> y subdominio, por ejemplo <b>enlaces</b> (queda <b>enlaces.tudominio.com</b>).</li>
-      <li>Elige el <b>Site</b> de esta Raspberry y pon como destino <b>http</b>, la IP de la Raspberry (<b class="piIp">192.168.1.50</b>) y el puerto <b class="piPort"></b>. Guarda: Pangolin pone el certificado https solo.</li>
-      <li>En ese recurso, en <b>Authentication</b>, <b>quita la autenticación de Pangolin</b> (Use Platform SSO apagado): las páginas de enlaces son públicas y el panel ya tiene su propio usuario y contraseña.</li>
-      <li>El administrador pone <b>https://enlaces.tudominio.com</b> en <b>Dirección pública del servidor</b> (abajo).</li>
-      <li>Para un <b>dominio propio</b> de una página (por ejemplo <b>laura.com</b>): añádelo en Pangolin en <b>Domains</b> (con los registros DNS que te indique), crea otro recurso con ese dominio y el mismo destino (IP de la Raspberry y puerto <b class="piPort"></b>), y escríbelo arriba en Dominio propio.</li>
+      <li data-i18n="pg1">En Pangolin, entra en <b>Resources → Add Resource</b>, tipo <b>HTTP</b>. Nombre <b>EnlacesPanel</b> y subdominio, por ejemplo <b>enlaces</b> (queda <b>enlaces.tudominio.com</b>).</li>
+      <li data-i18n="pg2">Elige el <b>Site</b> de esta Raspberry y pon como destino <b>http</b>, la IP de la Raspberry (<b class="piIp">192.168.1.50</b>) y el puerto <b class="piPort"></b>. Guarda: Pangolin pone el certificado https solo.</li>
+      <li data-i18n="pg3">En ese recurso, en <b>Authentication</b>, <b>quita la autenticación de Pangolin</b> (Use Platform SSO apagado): las páginas de enlaces son públicas y el panel ya tiene su propio usuario y contraseña.</li>
+      <li data-i18n="pg4">El administrador pone <b>https://enlaces.tudominio.com</b> en <b>Dirección pública del servidor</b> (abajo).</li>
+      <li data-i18n="pg5">Para un <b>dominio propio</b> de una página (por ejemplo <b>laura.com</b>): añádelo en Pangolin en <b>Domains</b> (con los registros DNS que te indique), crea otro recurso con ese dominio y el mismo destino (IP de la Raspberry y puerto <b class="piPort"></b>), y escríbelo arriba en Dominio propio.</li>
      </ol>
     </details>
     <details class="card"><summary><b>Con otro proxy (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…)</b></summary>
      <ol class="hint">
-      <li>En la web donde compraste el dominio, crea un registro <b>A</b> que apunte a la IP pública de tu casa (o un <b>CNAME</b> a tu DNS dinámico).</li>
-      <li>En tu proxy con HTTPS (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…) añade ese dominio y envíalo a esta Raspberry, al puerto <b class="piPort"></b>.</li>
+      <li data-i18n="px1">En la web donde compraste el dominio, crea un registro <b>A</b> que apunte a la IP pública de tu casa (o un <b>CNAME</b> a tu DNS dinámico).</li>
+      <li data-i18n="px2">En tu proxy con HTTPS (Nginx Proxy Manager, Caddy, Cloudflare Tunnel…) añade ese dominio y envíalo a esta Raspberry, al puerto <b class="piPort"></b>.</li>
       <li>Escribe el dominio aquí y pulsa Guardar. El enlace, el botón Compartir y el código QR usarán tu dominio.</li>
      </ol>
     </details>
@@ -206,14 +210,14 @@
     <div id="serverBox" hidden>
      <h2>Servidor <span class="opt">(administrador)</span></h2>
      <label for="sPublic">Dirección pública del servidor</label>
-     <p class="hint">La dirección con la que se entra desde Internet, por ejemplo <b>https://enlaces.midominio.com</b>. Se usa para los enlaces que compartes y para los QR de todas las páginas que no tengan dominio propio. Déjala vacía para usar la dirección del navegador.</p>
+     <p class="hint" data-i18n="pubHint">La dirección con la que se entra desde Internet, por ejemplo <b>https://enlaces.midominio.com</b>. Se usa para los enlaces que compartes y para los QR de todas las páginas que no tengan dominio propio. Déjala vacía para usar la dirección del navegador.</p>
      <div class="row"><input id="sPublic" autocapitalize="off" inputmode="url" placeholder="https://enlaces.midominio.com"><button type="button" id="sPublicSave">Guardar</button></div>
      <div class="err" id="sPubErr" role="alert"></div>
      <label class="inline"><input type="checkbox" id="sReg"> Permitir que otras personas pidan cuenta (tú las apruebas en Usuarios)</label>
     </div>
 
     <h2>Otra página</h2>
-    <p class="hint">Puedes tener varias: una personal, otra para tu negocio… (máximo <span id="maxPages"></span>).</p>
+    <p class="hint" data-i18n="maxPages">Puedes tener varias: una personal, otra para tu negocio… (máximo <span id="maxPages"></span>).</p>
     <button type="button" class="ghost" id="newPage">+ Crear otra página</button>
     <h2>Borrar</h2>
     <button type="button" class="danger" id="delPage">Borrar esta página para siempre</button>
@@ -235,6 +239,8 @@
     <h3>Borrar cuenta</h3>
     <p class="hint">Se borran tu cuenta, tus páginas, tus fotos y tus estadísticas. No se puede deshacer.</p>
     <button type="button" class="danger" id="delAccount">Borrar mi cuenta</button>
+    <h3>Idioma</h3>
+    <div class="seg lang" role="group" aria-label="Idioma"><button type="button" data-lang="es">Español</button><button type="button" data-lang="en">English</button></div>
     <h3>Acerca de</h3>
     <p id="verLine"></p>
     <div class="row">
@@ -242,7 +248,7 @@
      <button type="button" class="ghost" id="appNewsBtn" hidden>Novedades de la app</button>
      <button type="button" class="ghost" id="appCheckBtn" hidden>Buscar versión nueva de la app</button>
     </div>
-    <p class="hint" id="appHint">Para actualizar el servidor: <code>git pull && ./install.sh</code> en la carpeta de EnlacesPanel.</p>
+    <p class="hint" id="appHint" data-i18n="upd">Para actualizar el servidor: <code>git pull && ./install.sh</code> en la carpeta de EnlacesPanel.</p>
     <p class="ver">EnlacesPanel <span id="ver"></span> · <a href="/privacidad" target="_blank">Privacidad</a></p>
    </div>
 
@@ -274,6 +280,7 @@
    <div class="row"><button type="button" class="ghost small" id="copyUrl">Copiar enlace</button><button type="button" class="ghost small" id="shareUrl" hidden>Compartir</button></div>
   </aside>
  </main>
+ <footer class="pfoot" id="pFoot"></footer>
 </div>
 
 <div class="viewer" id="viewer" hidden role="dialog" aria-label="Tu página">
@@ -300,6 +307,7 @@
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" hidden>Deshacer</button></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#e4002b"/><g fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"><path d="M17.5 22.5l5-5"/><path d="M15.2 19.3l-2.6 2.6a4.6 4.6 0 0 0 6.5 6.5l2.6-2.6"/><path d="M24.8 20.7l2.6-2.6a4.6 4.6 0 0 0-6.5-6.5l-2.6 2.6"/></g></symbol></svg>
+<script src="/static/i18n.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

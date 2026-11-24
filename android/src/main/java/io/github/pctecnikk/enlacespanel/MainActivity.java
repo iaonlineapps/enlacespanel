@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        L.init(this);
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.WHITE);
         setContentView(root);
@@ -138,13 +139,13 @@ public class MainActivity extends Activity {
         title.setPadding(0, dp(10), 0, dp(4));
         box.addView(title);
 
-        TextView info = text("Conecta la app con tu servidor EnlacesPanel. Escribe la misma dirección que usas en el navegador.", 15, 0xFF333333);
+        TextView info = text(L.t("Conecta la app con tu servidor EnlacesPanel. Escribe la misma dirección que usas en el navegador.", "Connect the app to your EnlacesPanel server. Type the same address you use in the browser."), 15, 0xFF333333);
         info.setPadding(0, dp(4), 0, dp(16));
         box.addView(info);
 
-        TextView need = text("Importante: necesitas tu propio servidor EnlacesPanel ya instalado "
-                + "(en una Raspberry Pi o un ordenador con Linux y Docker). Sin servidor la app no funciona.\n"
-                + "¿Aún no lo tienes? Toca aquí para ver cómo instalarlo.", 14, 0xFF7A1F00);
+        TextView need = text(L.t("Importante: necesitas tu propio servidor EnlacesPanel ya instalado ", "Important: you need your own EnlacesPanel server already installed ")
+                + L.t("(en una Raspberry Pi o un ordenador con Linux y Docker). Sin servidor la app no funciona.\n", "(on a Raspberry Pi or a Linux computer with Docker). Without a server the app does not work.\n")
+                + L.t("¿Aún no lo tienes? Toca aquí para ver cómo instalarlo.", "Don't have one yet? Tap here to see how to install it."), 14, 0xFF7A1F00);
         need.setPadding(dp(14), dp(12), dp(14), dp(12));
         GradientDrawable nbg = new GradientDrawable();
         nbg.setColor(0xFFFFF1F2);
@@ -157,15 +158,15 @@ public class MainActivity extends Activity {
         nlp.setMargins(0, 0, 0, dp(18));
         box.addView(need, nlp);
 
-        box.addView(label("Dirección de tu servidor"));
-        box.addView(text("Lo normal es tu dominio, que funciona desde cualquier sitio: "
-                + "por ejemplo enlaces.midominio.com", 13, GREY));
+        box.addView(label(L.t("Dirección de tu servidor", "Your server address")));
+        box.addView(text(L.t("Lo normal es tu dominio, que funciona desde cualquier sitio: ", "Usually your domain, which works from anywhere: ")
+                + L.t("por ejemplo enlaces.midominio.com", "for example links.mydomain.com"), 13, GREY));
         final EditText main = input("enlaces.midominio.com", prefs.getString(KEY_URL, ""));
         box.addView(main, matchWrap());
 
-        box.addView(label("Dirección en casa (opcional)"));
-        box.addView(text("La IP de tu servidor en la wifi de casa y el puerto, por ejemplo 192.168.1.50:8092. "
-                + "Si pones las dos, la app usa sola la que funcione.", 13, GREY));
+        box.addView(label(L.t("Dirección en casa (opcional)", "Home address (optional)")));
+        box.addView(text(L.t("La IP de tu servidor en la wifi de casa y el puerto, por ejemplo 192.168.1.50:8092. ", "Your server IP on your home wifi and the port, for example 192.168.1.50:8092. ")
+                + L.t("Si pones las dos, la app usa sola la que funcione.", "If you enter both, the app uses whichever works."), 13, GREY));
         final EditText alt = input("192.168.1.50:8092", prefs.getString(KEY_ALT, ""));
         alt.setImeOptions(EditorInfo.IME_ACTION_GO);
         box.addView(alt, matchWrap());
@@ -176,7 +177,7 @@ public class MainActivity extends Activity {
         box.addView(status);
 
         final Button connect = new Button(this);
-        connect.setText("Conectar");
+        connect.setText(L.t("Conectar", "Connect"));
         connect.setTextColor(Color.WHITE);
         connect.setAllCaps(false);
         connect.setTextSize(16);
@@ -190,26 +191,26 @@ public class MainActivity extends Activity {
             final String u1 = normalize(main.getText().toString());
             final String u2 = alt.getText().toString().trim().isEmpty() ? "" : normalize(alt.getText().toString());
             if (u1 == null && (u2 == null || u2.isEmpty())) {
-                status.setText("Escribe al menos una dirección válida.");
+                status.setText(L.t("Escribe al menos una dirección válida.", "Enter at least one valid address."));
                 return;
             }
             if (u2 == null) {
-                status.setText("La dirección de casa no parece válida.");
+                status.setText(L.t("La dirección de casa no parece válida.", "The home address doesn't look valid."));
                 return;
             }
             final String first = u1 != null ? u1 : u2;
             final String second = u1 != null ? u2 : "";
             connect.setEnabled(false);
             status.setTextColor(GREY);
-            status.setText("Comprobando " + first + " …");
+            status.setText(L.t("Comprobando ", "Checking ") + first + " …");
             checkServer(first, new CheckResult() { @Override public void done(boolean ok, String error) {
                 if (ok) { connect.setEnabled(true); saveAndOpen(first, second); return; }
                 if (!second.isEmpty()) {
-                    status.setText("Comprobando " + second + " …");
+                    status.setText(L.t("Comprobando ", "Checking ") + second + " …");
                     checkServer(second, new CheckResult() { @Override public void done(boolean ok2, String error2) {
                         connect.setEnabled(true);
                         if (ok2) {
-                            toast("Ahora entras por la dirección de casa. Fuera de casa se usará " + first);
+                            toast(L.t("Ahora entras por la dirección de casa. Fuera de casa se usará ", "You are now connected through the home address. Away from home it will use ") + first);
                             saveAndOpen(second, first);
                             return;
                         }
@@ -231,13 +232,13 @@ public class MainActivity extends Activity {
             return false;
         } });
 
-        TextView help = text("\nSi tu dominio no usa https, escribe la dirección completa con http://\n"
-                + "Puedes cambiar las direcciones cuando quieras: mantén pulsado el icono de EnlacesPanel "
-                + "y elige «Cambiar servidor», o pulsa Atrás dentro de la app.", 13, GREY);
+        TextView help = text(L.t("\nSi tu dominio no usa https, escribe la dirección completa con http://\n", "\nIf your domain doesn't use https, type the full address with http://\n")
+                + L.t("Puedes cambiar las direcciones cuando quieras: mantén pulsado el icono de EnlacesPanel ", "You can change the addresses at any time: long-press the EnlacesPanel icon ")
+                + L.t("y elige «Cambiar servidor», o pulsa Atrás dentro de la app.", "and choose \"Change server\", or press Back inside the app."), 13, GREY);
         help.setGravity(Gravity.CENTER);
         box.addView(help);
 
-        TextView ver = text("\nVersión " + Novedades.version(this) + " · Ver novedades", 13, RED);
+        TextView ver = text(L.t("\nVersión ", "\nVersion ") + Novedades.version(this) + L.t(" · Ver novedades", " · What's new"), 13, RED);
         ver.setGravity(Gravity.CENTER);
         ver.setPadding(0, dp(8), 0, dp(8));
         ver.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { Novedades.show(MainActivity.this, prefs, null); } });
@@ -250,10 +251,10 @@ public class MainActivity extends Activity {
         status.setTextColor(RED);
         status.setText(error);
         new AlertDialog.Builder(this)
-                .setTitle("No se ha podido comprobar")
-                .setMessage(error + "\n\n¿Quieres guardar estas direcciones de todas formas?")
-                .setPositiveButton("Guardar", new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) { saveAndOpen(first, second); } })
-                .setNegativeButton("Corregir", null)
+                .setTitle(L.t("No se ha podido comprobar", "Could not check"))
+                .setMessage(error + L.t("\n\n¿Quieres guardar estas direcciones de todas formas?", "\n\nDo you want to save these addresses anyway?"))
+                .setPositiveButton(L.t("Guardar", "Save"), new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) { saveAndOpen(first, second); } })
+                .setNegativeButton(L.t("Corregir", "Fix"), null)
                 .show();
     }
 
@@ -330,18 +331,18 @@ public class MainActivity extends Activity {
                     String body = n > 0 ? new String(buf, 0, n, "UTF-8") : "";
                     in.close();
                     ok = body.contains("EnlacesPanel");
-                    error = ok ? null : "Esa dirección responde, pero no parece un servidor EnlacesPanel.";
+                    error = ok ? null : L.t("Esa dirección responde, pero no parece un servidor EnlacesPanel.", "That address responds, but it doesn't look like an EnlacesPanel server.");
                 } else {
-                    error = "El servidor ha respondido con un error (" + code + ").";
+                    error = L.t("El servidor ha respondido con un error (", "The server responded with an error (") + code + ").";
                 }
             } catch (javax.net.ssl.SSLException e) {
-                error = "Problema con el certificado https del servidor. Si tu servidor no usa https, escribe la dirección con http://";
+                error = L.t("Problema con el certificado https del servidor. Si tu servidor no usa https, escribe la dirección con http://", "Problem with the server's https certificate. If your server doesn't use https, type the address with http://");
             } catch (java.net.UnknownHostException e) {
-                error = "No se encuentra esa dirección. Revisa que esté bien escrita.";
+                error = L.t("No se encuentra esa dirección. Revisa que esté bien escrita.", "That address can't be found. Check that it is typed correctly.");
             } catch (java.net.SocketTimeoutException e) {
-                error = "El servidor no contesta. Si has puesto la IP de casa, comprueba que estás conectado a la wifi de casa.";
+                error = L.t("El servidor no contesta. Si has puesto la IP de casa, comprueba que estás conectado a la wifi de casa.", "The server doesn't answer. If you entered the home IP, check that you are on your home wifi.");
             } catch (Exception e) {
-                error = "No se puede conectar. Si has puesto la IP de casa, comprueba que estás conectado a la wifi de casa.";
+                error = L.t("No se puede conectar. Si has puesto la IP de casa, comprueba que estás conectado a la wifi de casa.", "Cannot connect. If you entered the home IP, check that you are on your home wifi.");
             } finally {
                 if (c != null) c.disconnect();
             }
@@ -418,10 +419,10 @@ public class MainActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("image/*");
                 try {
-                    startActivityForResult(Intent.createChooser(i, "Elegir foto"), REQ_FILES);
+                    startActivityForResult(Intent.createChooser(i, L.t("Elegir foto", "Choose photo")), REQ_FILES);
                 } catch (ActivityNotFoundException e) {
                     fileCallback = null;
-                    toast("No hay ninguna app para elegir fotos");
+                    toast(L.t("No hay ninguna app para elegir fotos", "No app available to pick photos"));
                     return false;
                 }
                 return true;
@@ -452,7 +453,7 @@ public class MainActivity extends Activity {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, u));
         } catch (ActivityNotFoundException e) {
-            toast("No hay ninguna app para abrir este enlace");
+            toast(L.t("No hay ninguna app para abrir este enlace", "No app available to open this link"));
         }
     }
 
@@ -466,7 +467,7 @@ public class MainActivity extends Activity {
                 if (ok) {
                     String cur = base;
                     prefs.edit().putString(KEY_URL, other).putString(KEY_ALT, cur).apply();
-                    toast("Conectado por " + other);
+                    toast(L.t("Conectado por ", "Connected through ") + other);
                     showWeb(other, null);
                 } else {
                     showConnectionError();
@@ -481,16 +482,16 @@ public class MainActivity extends Activity {
         if (errorShown || isFinishing()) return;
         errorShown = true;
         new AlertDialog.Builder(this)
-                .setTitle("No se puede conectar")
-                .setMessage("Tu servidor EnlacesPanel no responde (" + base + ").\n\n"
-                        + "Si usas la IP de casa, comprueba que estás en la wifi de casa. "
-                        + "Fuera de casa necesitas la dirección con tu dominio.")
-                .setPositiveButton("Reintentar", new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) {
+                .setTitle(L.t("No se puede conectar", "Cannot connect"))
+                .setMessage(L.t("Tu servidor EnlacesPanel no responde (", "Your EnlacesPanel server is not responding (") + base + ").\n\n"
+                        + L.t("Si usas la IP de casa, comprueba que estás en la wifi de casa. ", "If you use the home IP, check that you are on your home wifi. ")
+                        + L.t("Fuera de casa necesitas la dirección con tu dominio.", "Away from home you need the address with your domain."))
+                .setPositiveButton(L.t("Reintentar", "Retry"), new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) {
                     errorShown = false;
                     triedOther = false;
                     if (web != null) web.loadUrl(base + "/panel");
                 } })
-                .setNegativeButton("Cambiar servidor", new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) { showSetup(null); } })
+                .setNegativeButton(L.t("Cambiar servidor", "Change server"), new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface d, int w) { showSetup(null); } })
                 .setCancelable(false)
                 .show();
     }
@@ -514,9 +515,9 @@ public class MainActivity extends Activity {
             r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
             ((DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(r);
-            toast("Descargando " + name + " en la carpeta Descargas");
+            toast(L.t("Descargando ", "Downloading ") + name + L.t(" en la carpeta Descargas", " to the Downloads folder"));
         } catch (Exception e) {
-            toast("No se ha podido descargar");
+            toast(L.t("No se ha podido descargar", "Could not download"));
         }
     }
 
@@ -526,7 +527,7 @@ public class MainActivity extends Activity {
             String[] d = pendingDownload;
             pendingDownload = null;
             if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) download(d);
-            else toast("Sin permiso no se puede guardar la descarga");
+            else toast(L.t("Sin permiso no se puede guardar la descarga", "Without permission the download can't be saved"));
         }
     }
 
@@ -556,7 +557,7 @@ public class MainActivity extends Activity {
                 i.setType("text/plain");
                 i.putExtra(Intent.EXTRA_TEXT, url);
                 if (title != null) i.putExtra(Intent.EXTRA_SUBJECT, title);
-                a.startActivity(Intent.createChooser(i, "Compartir tu página"));
+                a.startActivity(Intent.createChooser(i, L.t("Compartir tu página", "Share your page")));
             } });
         }
 
@@ -565,7 +566,7 @@ public class MainActivity extends Activity {
             a.runOnUiThread(new Runnable() { @Override public void run() {
                 ClipboardManager cm = (ClipboardManager) a.getSystemService(Context.CLIPBOARD_SERVICE);
                 cm.setPrimaryClip(ClipData.newPlainText("EnlacesPanel", text));
-                a.toast("Enlace copiado");
+                a.toast(L.t("Enlace copiado", "Link copied"));
             } });
         }
 
@@ -577,6 +578,10 @@ public class MainActivity extends Activity {
         public void news() {
             a.runOnUiThread(new Runnable() { @Override public void run() { Novedades.show(a, a.prefs, null); } });
         }
+
+        /** El panel avisa del idioma elegido (es/en) para que la app use el mismo. */
+        @JavascriptInterface
+        public void setLang(String l) { L.set(a, l); }
 
         /** Mira ahora si hay una versión nueva de la app en GitHub. */
         @JavascriptInterface
@@ -600,8 +605,8 @@ public class MainActivity extends Activity {
         }
         new AlertDialog.Builder(this)
                 .setTitle("EnlacesPanel")
-                .setItems(new CharSequence[]{"Salir", "Cambiar servidor", "Recargar",
-                        "Novedades (versión " + Novedades.version(this) + ")"}, new DialogInterface.OnClickListener() {
+                .setItems(new CharSequence[]{L.t("Salir", "Exit"), L.t("Cambiar servidor", "Change server"), L.t("Recargar", "Reload"),
+                        L.t("Novedades (versión ", "What's new (version ") + Novedades.version(this) + ")"}, new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int which) {
                         if (which == 0) finish();
                         else if (which == 1) showSetup(null);

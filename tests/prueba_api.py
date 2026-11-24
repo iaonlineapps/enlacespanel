@@ -96,4 +96,12 @@ with TestClient(app) as c:
     ok(c4.post("/api/login", headers=H, json={"username":"nuevo1","password":"otraclave9"}))
     nv=ok(c4.get("/api/novedades")).json(); assert nv["novedades"][0]["version"]==nv["version"] and nv["novedades"][0]["items"], nv
     ok(TestClient(app).get("/api/novedades"), 401)
+    # idioma
+    ok(c3.put(f"/api/pages/{ap['id']}", headers=H, json={"style":{"lang":"en","anim":"viva"}}))
+    h=ok(TestClient(app).get("/pepe-luis")).text; assert 'lang="en"' in h and "Made with" in h and "/privacidad?lang=en" in h
+    assert "Privacy" in ok(TestClient(app).get("/privacidad?lang=en")).text
+    assert "Privacidad" in ok(TestClient(app).get("/privacidad", headers={"accept-language":"es-ES,es"})).text
+    assert "does not exist" in ok(TestClient(app).get("/no-existe-xx", headers={"accept-language":"en-GB"}), 404).text
+    assert ok(c4.get("/api/novedades?lang=en")).json()["novedades"][0]["items"][0].startswith("**Spanish")
+    assert "/static/app.js?v=" in ok(TestClient(app).get("/panel")).text
     print("TODO OK", r.headers.get("content-security-policy") is not None)

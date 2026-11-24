@@ -3,6 +3,13 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.5.0
+- **Español o inglés:** elige el idioma del panel en Cuenta → Idioma (o en la pantalla de
+  entrada). La primera vez usa el del navegador. La app de Android sigue el mismo idioma.
+- **Idioma de cada página** (Ajustes): los textos fijos de tu página pública (pie, privacidad,
+  aviso legal) salen en español o en inglés.
+- **Pie con las versiones** abajo del panel: web, app de Android y enlace a las novedades.
+
 ## 0.4.1
 - **Guía de Pangolin** en Ajustes y en el README: cómo publicar EnlacesPanel con tu dominio
   desde el VPS (recurso HTTP, la IP de la Raspberry y el puerto 8092, sin la autenticación de

@@ -127,6 +127,11 @@ main.ed[data-dev=pc]{grid-template-columns:minmax(0,1fr) minmax(0,600px);max-wid
 details.card summary{cursor:pointer}
 details.card ol{margin:10px 0 0;padding-left:20px}
 details.card li{margin:6px 0}
+/* pie con versiones */
+.pfoot{text-align:center;font-size:13px;color:var(--grey);padding:18px 16px 28px;border-top:1px solid var(--line)}
+.pfoot a{color:inherit}
+.seg.lang{margin-top:8px}
+.auth .seg.lang{display:flex;width:max-content;margin:24px auto 0}
 /* versión y novedades */
 .vchip{min-height:32px;padding:0 10px;border-radius:999px;font:600 13px ui-monospace,monospace;background:transparent;color:var(--grey);border:1px solid var(--line)}
 .vchip:hover{color:var(--red);border-color:var(--red)}
