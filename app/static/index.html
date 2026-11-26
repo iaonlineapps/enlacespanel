@@ -17,6 +17,11 @@
  <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg></div>
  <h1 translate="no">Enlaces<b>Panel</b></h1>
  <p class="hint" id="authLead">Tu página de enlaces, en tu propio servidor.</p>
+ <div id="authAccs" hidden>
+  <p class="accsec">Elige una cuenta</p>
+  <div id="authAccList"></div>
+  <p class="hint accor">o entra con otra cuenta</p>
+ </div>
  <form id="authForm">
   <label for="uName">Usuario</label>
   <input id="uName" autocomplete="username" autocapitalize="off" required>
@@ -25,6 +30,7 @@
   <label class="inline" id="acceptRow" hidden><input type="checkbox" id="uAccept"> <span data-i18n="accept">He leído la <a href="/privacidad" target="_blank">política de privacidad</a></span></label>
   <div class="err" id="authErr" role="alert"></div>
   <div class="row"><button type="submit" id="authBtn">Entrar</button><button type="button" class="ghost" id="authSwitch">Crear cuenta</button></div>
+  <button type="button" class="ghost" id="authCancel" hidden>Cancelar y volver a mi cuenta</button>
  </form>
  <div class="seg lang" role="group" aria-label="Idioma"><button type="button" data-lang="es">Español</button><button type="button" data-lang="en">English</button></div>
 </section>
@@ -41,7 +47,17 @@
   </div>
   <button type="button" class="ghost" id="openPage">Ver mi página</button>
   <button type="button" class="vchip" id="vChip" title="Ver novedades"></button>
-  <button class="ghost" id="logout">Salir</button>
+  <div class="accwrap">
+   <button type="button" class="ghost" id="accBtn" aria-haspopup="true" aria-expanded="false" title="Tu cuenta"><span class="accav" id="accAv" translate="no"></span><span id="accName" translate="no"></span></button>
+   <div class="accmenu" id="accMenu" hidden>
+    <div class="accsec" id="accSec" hidden>Cambiar a</div>
+    <div id="accList"></div>
+    <button type="button" class="ghost" id="accAdd">+ Añadir otra cuenta</button>
+    <hr>
+    <button type="button" class="ghost" id="logout">Salir</button>
+    <button type="button" class="ghost" id="logoutAll" hidden>Salir de todas las cuentas</button>
+   </div>
+  </div>
  </header>
  <nav class="tabs" id="tabs" aria-label="Secciones">
   <button data-tab="links" class="sel">Enlaces</button>

@@ -3,6 +3,12 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.5.2
+- **Cambio rápido de usuario:** toca tu nombre arriba a la derecha y verás las otras cuentas abiertas
+  en este dispositivo; tocas una y pasas a ella sin escribir la contraseña. Con «Añadir otra cuenta»
+  entras en otra (esa vez sí con su contraseña). Al salir, la pantalla de entrada te ofrece las
+  cuentas recordadas, y la ✕ quita una del dispositivo.
+
 ## 0.5.1
 - La guía de Pangolin de Ajustes pone de ejemplo `192.168.1.x` en vez de una IP concreta (si entras
   por la IP de casa, sigue saliendo la tuya).
