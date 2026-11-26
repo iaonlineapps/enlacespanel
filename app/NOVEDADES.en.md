@@ -2,6 +2,12 @@
 
 <!-- Newest version on top. The Spanish list is in NOVEDADES.md. -->
 
+## 0.5.2
+- **Quick account switching:** tap your name at the top right to see the other accounts signed in on
+  this device; tap one to switch to it without typing the password. "Add another account" signs in
+  to one more (with its password that time). When you sign out, the sign-in screen offers the
+  remembered accounts, and the ✕ removes one from the device.
+
 ## 0.5.1
 - The Pangolin guide in Settings uses `192.168.1.x` as an example instead of a specific IP (if you
   open the panel by your home IP, it still shows yours).

@@ -170,3 +170,24 @@ button:active,.btn:active{transform:scale(.97)}
  .top .btn,.top button{min-height:40px;padding:0 12px}
  .top .seg,.top .vchip{display:none}
 }
+
+/* cambio rápido de usuario */
+.accwrap{position:relative}
+#accBtn{gap:8px;padding:0 10px 0 6px}
+.accav{width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:inline-grid;place-items:center;font-weight:800;font-size:14px;flex:none}
+.accmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:8px;min-width:240px;display:flex;flex-direction:column;gap:4px}
+.accmenu[hidden]{display:none}
+.accmenu button{justify-content:flex-start;border-color:transparent;width:100%}
+.accmenu hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+#logout,#logoutAll{color:var(--red)}
+.accsec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);margin:4px 8px}
+#authAccs .accsec{margin:18px 0 8px}
+.accrow{display:flex;align-items:center;gap:4px}
+#authAccList{display:flex;flex-direction:column;gap:8px}
+#authAccList .accrow{border:1px solid var(--line);border-radius:10px;padding:3px}
+.accpick{flex:1;justify-content:flex-start;gap:12px;border-color:transparent;min-width:0;font-size:16px}
+.accpick span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.ghost.accforget,button.ghost.accpick,.accmenu button.ghost{border-color:transparent}
+.accforget{color:var(--grey)}
+.accor{text-align:center;margin:12px 0 4px}
+#authCancel{width:100%;margin-top:8px}

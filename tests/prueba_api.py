@@ -102,6 +102,17 @@ with TestClient(app) as c:
     assert "Privacy" in ok(TestClient(app).get("/privacidad?lang=en")).text
     assert "Privacidad" in ok(TestClient(app).get("/privacidad", headers={"accept-language":"es-ES,es"})).text
     assert "does not exist" in ok(TestClient(app).get("/no-existe-xx", headers={"accept-language":"en-GB"}), 404).text
-    assert ok(c4.get("/api/novedades?lang=en")).json()["novedades"][0]["items"][0].startswith("**Spanish")
+    nen=ok(c4.get("/api/novedades?lang=en")).json()["novedades"][0]["items"]; assert nen and nen[0]!=nv["novedades"][0]["items"][0], nen
     assert "/static/app.js?v=" in ok(TestClient(app).get("/panel")).text
+    # cambio rapido de usuario
+    ok(c4.post("/api/login", headers=H, json={"username":"david","password":"12345678"}))
+    ac=ok(c4.get("/api/accounts")).json(); assert ac["current"]=="david" and [x["username"] for x in ac["accounts"]]==["nuevo1"], ac
+    ok(c4.post("/api/accounts/switch", json={"username":"nuevo1"}), 403)  # CSRF
+    ok(c4.post("/api/accounts/switch", headers=H, json={"username":"nuevo1"}))
+    assert ok(c4.get("/api/me")).json()["user"]["username"]=="nuevo1"
+    ok(TestClient(app).post("/api/accounts/switch", headers=H, json={"username":"david"}), 400)  # otro dispositivo
+    ok(c4.post("/api/logout", headers=H))
+    assert [x["username"] for x in ok(c4.get("/api/accounts")).json()["accounts"]]==["david"]
+    ok(c4.post("/api/accounts/forget", headers=H, json={"username":"david"}))
+    assert ok(c4.get("/api/accounts")).json()["accounts"]==[]
     print("TODO OK", r.headers.get("content-security-policy") is not None)

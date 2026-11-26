@@ -133,6 +133,10 @@ const EN = {
   'Solo se permiten direcciones web, correos (mailto:) o teléfonos (tel:)': 'Only web addresses, emails (mailto:) or phone numbers (tel:) are allowed',
   'Tema desconocido': 'Unknown theme', 'Tienes que aceptar la política de privacidad': 'You have to accept the privacy policy', 'Tienes que entrar': 'You have to sign in',
   'Tu cuenta está pendiente de que el administrador la apruebe': 'Your account is waiting for the administrator to approve it',
+  'Tu cuenta': 'Your account', 'Cambiar a': 'Switch to', '+ Añadir otra cuenta': '+ Add another account', 'Añadir otra cuenta': 'Add another account',
+  'Salir de todas las cuentas': 'Sign out of all accounts', 'Elige una cuenta': 'Choose an account', 'o entra con otra cuenta': 'or sign in with another account',
+  'Cancelar y volver a mi cuenta': 'Cancel and go back to my account', 'Quitar de este dispositivo': 'Remove from this device',
+  'Esa cuenta ya no tiene la sesión abierta aquí. Entra con su contraseña': 'That account is no longer signed in here. Sign in with its password',
   'Usuario no encontrado': 'User not found', 'Usuario o contraseña incorrectos': 'Wrong username or password',
 };
 // Textos con partes que cambian

@@ -29,11 +29,49 @@ function refreshPreview(now) {
 
 // ---------- entrar ----------
 let registering = false;
-function showAuth() {
-  $('app').hidden = true; $('auth').hidden = false;
-  registering = !!(info && info.first_user);
+function showAuth(adding = false) {
+  $('app').hidden = true; $('auth').hidden = false; $('accMenu').hidden = true;
+  registering = !!(info && info.first_user) && !adding;
   setAuthMode();
+  $('authCancel').hidden = !adding;
+  if (adding) { $('uName').value = ''; $('uPass').value = ''; $('authLead').textContent = 'Añadir otra cuenta'; }
+  paintAuthAccounts(adding);
 }
+// ---------- cambio rápido de usuario ----------
+// El servidor recuerda las cuentas abiertas en este dispositivo (en una cookie que el
+// JavaScript no puede leer) y deja pasar de una a otra sin volver a poner la contraseña.
+async function getAccounts() { try { return (await api('/api/accounts')).accounts || []; } catch (e) { return []; } }
+const accInitial = n => esc(String(n || '?')[0].toUpperCase());
+const accRow = (a, forget) => `<div class="accrow"><button type="button" class="ghost accpick" data-user="${esc(a.username)}" translate="no"><span class="accav">${accInitial(a.username)}</span><span>${esc(a.username)}</span></button>` +
+  (forget ? `<button type="button" class="ghost small accforget" data-forget="${esc(a.username)}" title="Quitar de este dispositivo" aria-label="Quitar de este dispositivo">✕</button>` : '') + `</div>`;
+async function paintAuthAccounts(adding) {
+  const list = adding || (info && info.first_user) ? [] : await getAccounts();
+  $('authAccs').hidden = !list.length;
+  $('authAccList').innerHTML = list.map(a => accRow(a, true)).join('');
+}
+async function switchAccount(username) {
+  try { await api('/api/accounts/switch', {method: 'POST', body: {username}}); }
+  catch (err) { showAuth(); $('authErr').textContent = err.message; $('uName').value = username; $('uPass').focus(); return; }
+  location.reload();
+}
+$('authAccList').onclick = async e => {
+  const f = e.target.closest('[data-forget]');
+  if (f) { await api('/api/accounts/forget', {method: 'POST', body: {username: f.dataset.forget}}).catch(() => {}); return paintAuthAccounts(false); }
+  const p = e.target.closest('[data-user]'); if (p) switchAccount(p.dataset.user);
+};
+$('authCancel').onclick = () => location.reload();
+$('accBtn').onclick = async () => {
+  const m = $('accMenu');
+  if (!m.hidden) { m.hidden = true; $('accBtn').setAttribute('aria-expanded', 'false'); return; }
+  const list = await getAccounts();
+  $('accList').innerHTML = list.map(a => accRow(a, false)).join('');
+  $('accSec').hidden = $('logoutAll').hidden = !list.length;
+  m.hidden = false; $('accBtn').setAttribute('aria-expanded', 'true');
+};
+document.addEventListener('click', e => { if (!e.target.closest('.accwrap')) $('accMenu').hidden = true; });
+$('accList').onclick = e => { const p = e.target.closest('[data-user]'); if (p) switchAccount(p.dataset.user); };
+$('accAdd').onclick = () => showAuth(true);
+$('logoutAll').onclick = async () => { await api('/api/logout', {method: 'POST', body: {all: true}}); location.reload(); };
 function setAuthMode() {
   $('authBtn').textContent = registering ? 'Crear cuenta' : 'Entrar';
   $('authSwitch').textContent = registering ? 'Ya tengo cuenta' : 'Crear cuenta';
@@ -54,8 +92,10 @@ $('authForm').onsubmit = async e => {
       const r = await api('/api/register', {method: 'POST', body: {...body, accept: $('uAccept').checked}});
       if (!r.approved) { registering = false; setAuthMode(); $('authErr').textContent = 'Cuenta creada. El administrador tiene que aprobarla antes de que puedas entrar.'; return; }
     }
+    const adding = !$('authCancel').hidden;
     await api('/api/login', {method: 'POST', body});
     $('uPass').value = '';
+    if (adding) { location.reload(); return; }
     start();
   } catch (err) { $('authErr').textContent = err.message; }
 };
@@ -72,7 +112,7 @@ async function start() {
   const port = location.port || '8092';
   document.querySelectorAll('.piPort').forEach(e => e.textContent = port);
   if (/^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\./.test(location.hostname)) document.querySelectorAll('.piIp').forEach(e => e.textContent = location.hostname);
-  $('meName').textContent = me.username; $('ver').textContent = info.version;
+  $('meName').textContent = me.username; $('accName').textContent = me.username; $('accAv').textContent = String(me.username || '?')[0].toUpperCase(); $('ver').textContent = info.version;
   $('maxPages').textContent = info.max_pages; $('obBase').textContent = BASE; $('sBase').textContent = BASE;
   $('homeUrl').textContent = BASE;
   buildStatic();
