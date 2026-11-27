@@ -2,7 +2,7 @@
 # Actualiza EnlacesPanel a la última versión de GitHub, sin tocar tus datos.
 #
 # Uso en la Pi (o en cualquier Linux con Docker), por SSH:
-#   curl -fsSL https://raw.githubusercontent.com/pctecnikk/enlacespanel/main/update.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/iaonlineapps/enlacespanel/main/update.sh | bash
 # o, desde la carpeta de EnlacesPanel:
 #   ./update.sh
 #
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 NAME="EnlacesPanel"
-REPO="https://github.com/pctecnikk/enlacespanel.git"
+REPO="https://github.com/iaonlineapps/enlacespanel.git"
 CONTAINER="enlacespanel"
 PORT_DEFAULT="8092"
 URL_PATH="/panel"

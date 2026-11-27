@@ -9,7 +9,7 @@ set -uo pipefail
 APP="EnlacesPanel"
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONTAINER="enlacespanel"
-IMAGES="enlacespanel:latest ghcr.io/pctecnikk/enlacespanel"
+IMAGES="enlacespanel:latest ghcr.io/iaonlineapps/enlacespanel"
 BACKUP="enlacespanel"
 DATA_DIR="./data"
 # si hay .env con DATA_DIR (versión pública), manda ese
@@ -99,6 +99,6 @@ echo "  ¡Gracias por haber usado $APP!"
 echo "  Esperamos que te haya gustado."
 echo
 echo "  Si te faltó algo o tienes una idea, cuéntanoslo en:"
-echo "  https://github.com/pctecnikk/enlacespanel/issues"
-echo "  Y si algún día quieres volver, aquí estará: https://github.com/pctecnikk/enlacespanel"
+echo "  https://github.com/iaonlineapps/enlacespanel/issues"
+echo "  Y si algún día quieres volver, aquí estará: https://github.com/iaonlineapps/enlacespanel"
 echo "----------------------------------------------"

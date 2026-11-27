@@ -73,7 +73,7 @@ your data · Android app, and on iPhone it can be added to the home screen.
 **Install:**
 
 ```bash
-git clone https://github.com/pctecnikk/enlacespanel.git
+git clone https://github.com/iaonlineapps/enlacespanel.git
 cd enlacespanel
 ./install.sh          # creates the .env file, builds and starts
 ```
@@ -89,14 +89,14 @@ is created with your username (for example `/laura`).
 `./install.sh` again after changing it.
 
 **Update:** one line over SSH, from any folder:
-`curl -fsSL https://raw.githubusercontent.com/pctecnikk/enlacespanel/main/update.sh | bash`.
+`curl -fsSL https://raw.githubusercontent.com/iaonlineapps/enlacespanel/main/update.sh | bash`.
 Your data, `.env` and `docker-compose.yaml` are kept.
 
-**Ready-made image** (no build): `ghcr.io/pctecnikk/enlacespanel:latest`, for PC (amd64) and
+**Ready-made image** (no build): `ghcr.io/iaonlineapps/enlacespanel:latest`, for PC (amd64) and
 Raspberry Pi (arm64 and arm/v7).
 
 **Android app:** download **EnlacesPanel.apk** from
-[Releases](https://github.com/pctecnikk/enlacespanel/releases) (Android 7 or newer). The first
+[Releases](https://github.com/iaonlineapps/enlacespanel/releases) (Android 7 or newer). The first
 time it asks for your server address.
 
 **Uninstall:** `cd enlacespanel && bash uninstall.sh`. It asks before deleting anything, offers a
@@ -151,7 +151,7 @@ no hay que compilar nada.
 ## 2. Instalar
 
 ```bash
-git clone https://github.com/pctecnikk/enlacespanel.git
+git clone https://github.com/iaonlineapps/enlacespanel.git
 cd enlacespanel
 ./install.sh          # crea la configuración (.env), construye y arranca
 ```
@@ -193,7 +193,7 @@ Después de cambiar `.env`, vuelve a ejecutar `./install.sh`.
 Entra por SSH en el servidor y pega esta línea. Sirve desde cualquier carpeta:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pctecnikk/enlacespanel/main/update.sh | bash
+curl -fsSL https://raw.githubusercontent.com/iaonlineapps/enlacespanel/main/update.sh | bash
 ```
 
 Busca dónde está instalado EnlacesPanel, baja el código nuevo, reconstruye, arranca y te dice la
@@ -215,7 +215,7 @@ Es el mismo panel de EnlacesPanel dentro de una app, así que siempre está al d
 
 **Instalarla en el móvil:**
 
-1. Abre en el móvil la página de **[descargas (Releases)](https://github.com/pctecnikk/enlacespanel/releases)**,
+1. Abre en el móvil la página de **[descargas (Releases)](https://github.com/iaonlineapps/enlacespanel/releases)**,
    busca la más nueva que se llama **App Android** y toca **`EnlacesPanel.apk`**.
 2. Android pedirá permiso para **instalar apps de origen desconocido**. Dale permiso y toca
    **Instalar**. Si aparece un aviso de *Play Protect*, toca **Más detalles → Instalar de todas
@@ -395,4 +395,4 @@ propios (los iconos son dibujos sencillos hechos para EnlacesPanel, no los logot
 redes (Instagram, YouTube…) se usan solo para indicar a dónde lleva cada enlace, y
 pertenecen a sus dueños.
 
-Copyright (c) 2026 [pctecnikk](https://github.com/pctecnikk)
+Copyright (c) 2026 [IA Online Apps](https://github.com/iaonlineapps)

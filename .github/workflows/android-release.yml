@@ -28,7 +28,7 @@ jobs:
           V=$(grep -o 'versionName="[^"]*"' android/src/main/AndroidManifest.xml | cut -d'"' -f2)
           TAG="android-v$V"
           {
-            echo "> ⚠️ **Primero necesitas tu propio servidor EnlacesPanel instalado** (en una Raspberry Pi o cualquier Linux con Docker). La app solo sirve para editar tu página desde el móvil; sin servidor no hace nada. Cómo instalar el servidor: https://github.com/pctecnikk/enlacespanel#2-instalar"
+            echo "> ⚠️ **Primero necesitas tu propio servidor EnlacesPanel instalado** (en una Raspberry Pi o cualquier Linux con Docker). La app solo sirve para editar tu página desde el móvil; sin servidor no hace nada. Cómo instalar el servidor: https://github.com/iaonlineapps/enlacespanel#2-instalar"
             echo
             echo "App de EnlacesPanel para Android. Descarga **EnlacesPanel.apk** aquí abajo (en *Assets*), ábrela en el móvil y toca **Instalar**. Si Android pregunta, permite instalar apps de este origen."
             echo

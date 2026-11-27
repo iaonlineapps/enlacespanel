@@ -564,9 +564,9 @@ function paintVersions() {
   const av = appVer();
   $('vChip').textContent = 'v' + info.version;
   $('verLine').innerHTML = `<b>Web ${esc(info.version)}</b>` + (av ? ` · <b>App ${esc(av)}</b>`
-    : ' · <a href="https://github.com/pctecnikk/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App de Android</a>');
+    : ' · <a href="https://github.com/iaonlineapps/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App de Android</a>');
   $('pFoot').innerHTML = `EnlacesPanel · Web ${esc(info.version)}` + (av ? ` · App Android ${esc(av)}`
-    : ` · <a href="https://github.com/pctecnikk/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App Android</a>`)
+    : ` · <a href="https://github.com/iaonlineapps/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App Android</a>`)
     + ` · <a href="#" id="footNews">Novedades</a> · <a href="/privacidad${LANG === 'en' ? '?lang=en' : ''}" target="_blank">Privacidad</a>`;
   $('footNews').onclick = e => { e.preventDefault(); showNews(); };
   $('appNewsBtn').hidden = !(AND && AND.news); $('appCheckBtn').hidden = !(AND && AND.checkUpdate);
