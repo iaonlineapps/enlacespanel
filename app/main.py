@@ -1,5 +1,5 @@
 """EnlacesPanel: tu página de enlaces autoalojada (API + páginas públicas)."""
-import base64, io, re, secrets, time
+import asyncio, base64, io, re, secrets, time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -256,7 +256,11 @@ async def login(request: Request):
     keep = [cur_tok] if cur and cur["id"] != u["id"] else []
     if cur and cur["id"] == u["id"]:
         db.run("DELETE FROM sessions WHERE token=?", cur_tok)
-    r = JSONResponse({"ok": True})
+    # las cuentas de antes no tenian codigo de recuperacion: se les da uno al entrar (se ve una vez)
+    out = {"ok": True}
+    if not u["recovery"]:
+        out["recovery_code"] = db.new_recovery(u["id"])
+    r = JSONResponse(out)
     r.set_cookie(COOKIE, db.new_session(u["id"]), max_age=30 * 86400, httponly=True, samesite="lax",
                  secure=request.url.scheme == "https")
     _save_accounts(r, request, keep + _accounts(request), u["id"])
@@ -386,7 +390,39 @@ async def register(request: Request):
         err(409, "Ese usuario ya existe")
     db.run("INSERT INTO users(username,pw_hash,is_admin,status,created) VALUES(?,?,?,?,?)",
            name, db.hash_pw(pw), int(first), "approved" if first else "pending", time.time())
-    return {"ok": True, "approved": first}
+    code = db.new_recovery(db.q1("SELECT id FROM users WHERE username=?", name)["id"])
+    return {"ok": True, "approved": first, "recovery_code": code}
+
+
+# --- he olvidado mi usuario o mi contraseña ----------------------------------
+@app.post("/api/recover")
+async def recover(request: Request):
+    """Con el código de recuperación: dice el usuario, pone la contraseña nueva y da otro código.
+    El usuario es opcional: si no se recuerda, basta con el código."""
+    check_rate(request)
+    d = await request.json()
+    name, code, pw = text(d.get("username"), 64), text(d.get("code"), 64), str(d.get("password") or "")
+    if len(pw) < 8:
+        err(400, "La contraseña debe tener al menos 8 caracteres")
+    u = db.user_by_recovery(code)
+    if not u or (name and name.lower() != u["username"].lower()):
+        note_fail(request)
+        await asyncio.sleep(0.7)
+        err(400, "El código de recuperación no es correcto")
+    _fails.pop(_client(request), None)
+    db.run("UPDATE users SET pw_hash=? WHERE id=?", db.hash_pw(pw), u["id"])
+    db.run("DELETE FROM sessions WHERE user_id=?", u["id"])  # fuera de todas partes
+    return {"ok": True, "username": u["username"], "status": u["status"], "recovery_code": db.new_recovery(u["id"])}
+
+
+@app.post("/api/recovery")
+async def recovery_new(request: Request):
+    """Código de recuperación nuevo (en Cuenta); el anterior deja de valer."""
+    u = user_or_401(request)
+    d = await request.json()
+    if not db.check_pw(str(d.get("password") or ""), u["pw_hash"]):
+        err(400, "La contraseña actual no es correcta")
+    return {"ok": True, "recovery_code": db.new_recovery(u["id"])}
 
 
 @app.post("/api/password")
@@ -725,7 +761,8 @@ async def admin_create_user(request: Request):
         err(409, "Ese usuario ya existe")
     db.run("INSERT INTO users(username,pw_hash,is_admin,status,created) VALUES(?,?,?,'approved',?)",
            name, db.hash_pw(pw), int(bool(d.get("is_admin"))), time.time())
-    return {"ok": True}
+    # el administrador le pasa el código a la persona junto con su contraseña
+    return {"ok": True, "recovery_code": db.new_recovery(db.q1("SELECT id FROM users WHERE username=?", name)["id"])}
 
 
 @app.post("/api/admin/users/{user_id}")

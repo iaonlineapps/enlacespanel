@@ -30,6 +30,7 @@
   <label class="inline" id="acceptRow" hidden><input type="checkbox" id="uAccept"> <span data-i18n="accept">He leído la <a href="/privacidad" target="_blank">política de privacidad</a></span></label>
   <div class="err" id="authErr" role="alert"></div>
   <div class="row"><button type="submit" id="authBtn">Entrar</button><button type="button" class="ghost" id="authSwitch">Crear cuenta</button></div>
+  <button type="button" class="ghost" id="authForgot">¿Has olvidado tu usuario o contraseña?</button>
   <button type="button" class="ghost" id="authCancel" hidden>Cancelar y volver a mi cuenta</button>
  </form>
  <div class="seg lang" role="group" aria-label="Idioma"><button type="button" data-lang="es">Español</button><button type="button" data-lang="en">English</button></div>
@@ -249,6 +250,9 @@
      <div class="err" id="pwErr" role="alert"></div>
      <button type="submit">Cambiar contraseña</button>
     </form>
+    <h3>Código de recuperación</h3>
+    <p class="hint">Sirve para entrar si olvidas tu usuario o tu contraseña. Si lo has perdido, saca uno nuevo (el anterior deja de valer).</p>
+    <button type="button" class="ghost" id="recNew">Crear código nuevo</button>
     <h3>Tus datos</h3>
     <p class="hint">Descarga todo lo que tienes guardado (páginas y enlaces) en un archivo.</p>
     <a class="btn ghost" href="/api/export" download>Descargar mis datos</a>
@@ -319,6 +323,8 @@
  <div id="newsBody"></div>
  <div class="row"><button type="button" id="newsClose">Entendido</button></div>
 </dialog>
+
+<dialog class="news rec" id="recDlg" aria-labelledby="recTitle"></dialog>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="undo" hidden>Deshacer</button></div>
 
