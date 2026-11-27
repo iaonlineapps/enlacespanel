@@ -154,7 +154,7 @@ def render(p, preview=False, base="") -> str:
 <div class="av">{av}</div><h1 class="nm">{esc(name)}</h1>{f'<p class="bio">{esc(p["bio"])}</p>' if p["bio"] else ''}
 {socials if t["socpos"] == "arriba" else ""}<div class="links">{''.join(items)}</div>
 {socials if t["socpos"] != "arriba" else ""}
-<footer class="foot">{LOGO}<span>{tx("Hecho con", lang)} <a href="https://github.com/pctecnikk/enlacespanel" rel="noopener">EnlacesPanel</a></span></footer>
+<footer class="foot">{LOGO}<span>{tx("Hecho con", lang)} <a href="https://github.com/iaonlineapps/enlacespanel" rel="noopener">EnlacesPanel</a></span></footer>
 <p class="legal-l"><a href="/privacidad{q}">{tx("Privacidad", lang)}</a>{legal}</p>
 </main></body></html>"""
 

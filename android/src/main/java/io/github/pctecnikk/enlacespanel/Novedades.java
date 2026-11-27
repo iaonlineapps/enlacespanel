@@ -34,8 +34,8 @@ import java.net.URL;
  */
 final class Novedades {
 
-    static final String RELEASES_PAGE = "https://github.com/pctecnikk/enlacespanel/releases";
-    private static final String RELEASES_API = "https://api.github.com/repos/pctecnikk/enlacespanel/releases?per_page=30";
+    static final String RELEASES_PAGE = "https://github.com/iaonlineapps/enlacespanel/releases";
+    private static final String RELEASES_API = "https://api.github.com/repos/iaonlineapps/enlacespanel/releases?per_page=30";
     private static final String TAG_PREFIX = "android-v";
     private static final String KEY_LAST_CHECK = "update_last_check";
     private static final String KEY_SKIPPED = "update_skipped";

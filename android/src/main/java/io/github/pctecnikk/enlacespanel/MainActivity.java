@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
     private static final String KEY_ALT = "server_alt";
     private static final String ACTION_CHANGE_SERVER = "io.github.pctecnikk.enlacespanel.CHANGE_SERVER";
     private static final String ACTION_NOVEDADES = "io.github.pctecnikk.enlacespanel.NOVEDADES";
-    private static final String INSTALL_URL = "https://github.com/pctecnikk/enlacespanel#2-instalar";
+    private static final String INSTALL_URL = "https://github.com/iaonlineapps/enlacespanel#2-instalar";
     private static final int REQ_FILES = 1;
     private static final int REQ_STORAGE = 2;
     private static final int RED = 0xFFE4002B;
