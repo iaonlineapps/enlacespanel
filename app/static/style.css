@@ -130,6 +130,7 @@ details.card li{margin:6px 0}
 /* pie con versiones */
 .pfoot{text-align:center;font-size:13px;color:var(--grey);padding:18px 16px 28px;border-top:1px solid var(--line)}
 .pfoot a{color:inherit}
+.pfoot .madeby{display:block;margin-top:6px;font-size:12px;line-height:1.6;opacity:.9}
 .seg.lang{margin-top:8px}
 .auth .seg.lang{display:flex;width:max-content;margin:24px auto 0}
 /* versión y novedades */

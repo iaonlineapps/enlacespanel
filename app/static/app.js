@@ -666,7 +666,9 @@ function paintVersions() {
     : ' · <a href="https://github.com/iaonlineapps/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App de Android</a>');
   $('pFoot').innerHTML = `EnlacesPanel · Web ${esc(info.version)}` + (av ? ` · App Android ${esc(av)}`
     : ` · <a href="https://github.com/iaonlineapps/enlacespanel/releases?q=android&expanded=true" target="_blank" rel="noopener">App Android</a>`)
-    + ` · <a href="#" id="footNews">Novedades</a> · <a href="/privacidad${LANG === 'en' ? '?lang=en' : ''}" target="_blank">Privacidad</a>`;
+    + ` · <a href="#" id="footNews">Novedades</a> · <a href="/privacidad${LANG === 'en' ? '?lang=en' : ''}" target="_blank">Privacidad</a>`
+    + `<span class="madeby">💛 <span>Proyecto sin ánimo de lucro, gratis y sin anuncios</span> · 🤖 <span>App creada con ayuda de inteligencia artificial (IA)</span> · `
+    + `© 2026 <a href="https://github.com/iaonlineapps/enlacespanel" target="_blank" rel="noopener" translate="no">IA Online Apps</a> · <span>Uso personal no comercial</span></span>`;
   $('footNews').onclick = e => { e.preventDefault(); showNews(); };
   $('appNewsBtn').hidden = !(AND && AND.news); $('appCheckBtn').hidden = !(AND && AND.checkUpdate);
 }

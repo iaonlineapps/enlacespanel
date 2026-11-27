@@ -172,6 +172,9 @@ const EN = {
   "✉️ Correo": "✉️ Email",
   "⬇️ Bajar archivo": "⬇️ Download file",
   "Código de recuperación de EnlacesPanel": "EnlacesPanel recovery code",
+  "Proyecto sin ánimo de lucro, gratis y sin anuncios": "Non-profit project, free and ad-free",
+  "App creada con ayuda de inteligencia artificial (IA)": "App made with the help of artificial intelligence (AI)",
+  "Uso personal no comercial": "Personal, non-commercial use",
   "Contraseña cambiada, pero tu cuenta está desactivada": "Password changed, but your account is disabled",
   "Sirve para entrar si olvidas tu usuario o tu contraseña. Si lo has perdido, saca uno nuevo (el anterior deja de valer).": "It lets you get in if you forget your username or password. If you've lost it, create a new one (the old one stops working).",
 };

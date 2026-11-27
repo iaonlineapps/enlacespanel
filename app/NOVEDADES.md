@@ -3,6 +3,9 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.5.4
+- **Pie de página nuevo:** abajo del todo sale ahora «Proyecto sin ánimo de lucro, gratis y sin anuncios · App creada con ayuda de inteligencia artificial (IA) · © 2026 IA Online Apps · Uso personal no comercial».
+
 ## 0.5.3
 - **¿Has olvidado tu usuario o tu contraseña?** Ahora cada cuenta tiene un **código de
   recuperación**. Te lo enseñamos una vez al crear la cuenta (si tu cuenta ya existía, la próxima
