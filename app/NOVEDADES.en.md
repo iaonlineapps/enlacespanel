@@ -2,6 +2,9 @@
 
 <!-- Newest version on top. The Spanish list is in NOVEDADES.md. -->
 
+## 0.5.4
+- **New footer:** at the very bottom you now see «Non-profit project, free and ad-free · App made with the help of artificial intelligence (AI) · © 2026 IA Online Apps · Personal, non-commercial use».
+
 ## 0.5.3
 - **Forgot your username or password?** Every account now has a **recovery code**. It's shown
   once when the account is created (if your account already existed, the next time you sign in).
