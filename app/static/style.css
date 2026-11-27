@@ -191,3 +191,11 @@ button.ghost.accforget,button.ghost.accpick,.accmenu button.ghost{border-color:t
 .accforget{color:var(--grey)}
 .accor{text-align:center;margin:12px 0 4px}
 #authCancel{width:100%;margin-top:8px}
+/* código de recuperación: grande, fácil de leer y de copiar a mano */
+dialog.rec{max-width:min(480px,94vw)}
+dialog.rec form label{display:block;margin-top:8px}
+.rec-code{font:700 clamp(20px,6vw,28px)/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-align:center;padding:16px 10px;margin:12px 0;border:2px dashed var(--red);border-radius:12px;user-select:all;word-break:break-all}
+.rec-send{flex-wrap:wrap;gap:8px}
+.rec-send .rec-wa{background:#25d366;border-color:#25d366;color:#fff}
+.rec-send .rec-tg{background:#29a9eb;border-color:#29a9eb;color:#fff}
+#authForgot{width:100%;margin-top:6px}

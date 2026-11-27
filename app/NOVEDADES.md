@@ -3,6 +3,15 @@
 <!-- La versión más nueva va arriba. El número está en app/VERSION y se ve en Cuenta → Acerca de.
      La app de Android tiene sus propias novedades en android/src/main/res/raw/novedades.md. -->
 
+## 0.5.3
+- **¿Has olvidado tu usuario o tu contraseña?** Ahora cada cuenta tiene un **código de
+  recuperación**. Te lo enseñamos una vez al crear la cuenta (si tu cuenta ya existía, la próxima
+  vez que entres). Puedes copiarlo, mandártelo por WhatsApp, Telegram o correo, o bajarlo como archivo.
+- Si olvidas el usuario o la contraseña, en la pantalla de entrada toca «¿Has olvidado tu usuario
+  o contraseña?», pon el código y una contraseña nueva, y verás también tu usuario.
+- Si lo pierdes, en la pestaña Cuenta → «Código de recuperación» puedes sacar uno nuevo.
+- El administrador sigue pudiendo poner una contraseña nueva a cualquiera.
+
 ## 0.5.2
 - **Cambio rápido de usuario:** toca tu nombre arriba a la derecha y verás las otras cuentas abiertas
   en este dispositivo; tocas una y pasas a ella sin escribir la contraseña. Con «Añadir otra cuenta»

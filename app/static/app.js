@@ -90,14 +90,112 @@ $('authForm').onsubmit = async e => {
   try {
     if (registering) {
       const r = await api('/api/register', {method: 'POST', body: {...body, accept: $('uAccept').checked}});
+      if (r.recovery_code) await recoveryCodeDialog(r.recovery_code, body.username);
       if (!r.approved) { registering = false; setAuthMode(); $('authErr').textContent = 'Cuenta creada. El administrador tiene que aprobarla antes de que puedas entrar.'; return; }
     }
     const adding = !$('authCancel').hidden;
-    await api('/api/login', {method: 'POST', body});
+    const lr = await api('/api/login', {method: 'POST', body});
     $('uPass').value = '';
+    if (lr && lr.recovery_code) await recoveryCodeDialog(lr.recovery_code, body.username);
     if (adding) { location.reload(); return; }
     start();
   } catch (err) { $('authErr').textContent = err.message; }
+};
+// ---------- código de recuperación ----------
+// Cada cuenta tiene un código que se enseña una sola vez (al crearla, o al entrar la primera vez
+// si la cuenta es de antes). Con él se ve el usuario y se pone una contraseña nueva, aunque se
+// hayan olvidado los dos. No hace falta servidor de correo.
+// abre la ventana y espera a que se cierre; sticky = no se cierra con Escape (que no se pierda el código sin verlo)
+function recDialog(html, sticky, onOpen) {
+  const d = $('recDlg');
+  return new Promise(res => {
+    d.innerHTML = html;
+    d.oncancel = e => { if (sticky) e.preventDefault(); };
+    d.onclose = () => res(d.returnValue);
+    d.returnValue = '';
+    onOpen && onOpen(d);
+    d.showModal();
+  });
+}
+function recoveryCodeDialog(code, user, other) {
+  const name = t('Código de recuperación de EnlacesPanel');
+  const text = name + (user ? ` (${t('usuario')} ${user})` : '') + ': ' + code + '\n' + location.origin + '\n' +
+    t('Sirve para entrar si olvidas el usuario o la contraseña: «¿Has olvidado tu usuario o contraseña?».');
+  const open = u => window.open(u, '_blank', 'noopener');
+  const html = `<h2 id="recTitle">${other ? `Código de recuperación de <span translate="no">${esc(user)}</span>` : 'Tu código de recuperación'}</h2>
+    ${user && !other ? `<p>Tu usuario es <b translate="no">${esc(user)}</b></p>` : ''}
+    <p class="hint">${other ? 'Pásaselo junto con su contraseña. Con este código podrá entrar si olvida su usuario o su contraseña. Solo se enseña ahora.'
+      : 'Si algún día olvidas tu usuario o tu contraseña, con este código podrás entrar otra vez. Apúntalo o hazle una foto y guárdalo en un sitio seguro: solo se enseña ahora.'}</p>
+    <div class="rec-code" translate="no">${esc(code)}</div>
+    <p class="hint">Guárdalo donde quieras: cópialo, mándatelo por WhatsApp o Telegram (a ti mismo o a «Mensajes guardados») o bájalo como archivo.</p>
+    <div class="row rec-send">
+      <button type="button" class="ghost small" data-r="copy">📋 Copiar</button>
+      <button type="button" class="small rec-wa" data-r="wa">WhatsApp</button>
+      <button type="button" class="small rec-tg" data-r="tg">Telegram</button>
+      <button type="button" class="ghost small" data-r="mail">✉️ Correo</button>
+      ${window.EnlacesPanelAndroid ? '' : '<button type="button" class="ghost small" data-r="file">⬇️ Bajar archivo</button>'}
+      ${navigator.share || window.EnlacesPanelAndroid ? '<button type="button" class="ghost small" data-r="more">Otras apps</button>' : ''}
+    </div>
+    <form method="dialog" class="row" style="justify-content:flex-end;margin-top:14px"><button value="ok">Ya lo he guardado</button></form>`;
+  return recDialog(html, true, d => d.querySelector('.rec-send').onclick = async e => {
+    const b = e.target.closest('[data-r]'); if (!b) return;
+    const a = b.dataset.r;
+    if (a === 'copy') { try { await navigator.clipboard.writeText(text); } catch (er) { const x = document.createElement('textarea'); x.value = text; d.appendChild(x); x.select(); try { document.execCommand('copy'); } catch (e2) {} x.remove(); } toast('Copiado'); }
+    if (a === 'wa') open('https://wa.me/?text=' + encodeURIComponent(text));
+    if (a === 'tg') open('https://t.me/share/url?url=' + encodeURIComponent(location.origin) + '&text=' + encodeURIComponent(text.replace('\n' + location.origin, '')));
+    if (a === 'mail') location.href = 'mailto:?subject=' + encodeURIComponent(name) + '&body=' + encodeURIComponent(text);
+    if (a === 'file') {
+      const l = document.createElement('a');
+      l.href = URL.createObjectURL(new Blob([text.replace(/\n/g, '\r\n') + '\r\n'], {type: 'text/plain'}));
+      l.download = 'EnlacesPanel-' + t('codigo-recuperacion') + (user ? '-' + user : '') + '.txt';
+      document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(l.href), 5000);
+    }
+    if (a === 'more') { if (window.EnlacesPanelAndroid) window.EnlacesPanelAndroid.share(text, name); else navigator.share({title: name, text}).catch(() => {}); }
+  });
+}
+$('authForgot').onclick = async () => {
+  let res = null;
+  await recDialog(`<h2 id="recTitle">Recuperar mi cuenta</h2>
+    <p class="hint">Escribe tu código de recuperación (te lo enseñamos al crear la cuenta) y elige una contraseña nueva. Si no tienes el código, pide al administrador que te ponga una contraseña nueva.</p>
+    <form id="fgForm">
+      <label for="fgCode">Código de recuperación</label><input id="fgCode" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required>
+      <label for="fgUser">Usuario (si no lo recuerdas, déjalo vacío)</label><input id="fgUser" autocomplete="username" autocapitalize="off" maxlength="64">
+      <label for="fgP1">Contraseña nueva <span class="opt">(mínimo 8 caracteres)</span></label><input id="fgP1" type="password" autocomplete="new-password" required>
+      <label for="fgP2">Repite la contraseña nueva</label><input id="fgP2" type="password" autocomplete="new-password" required>
+      <div class="err" id="fgErr" role="alert"></div>
+      <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="fgCancel">Cancelar</button><button type="submit">Recuperar</button></div>
+    </form>`, false, d => {
+    d.querySelector('#fgCancel').onclick = () => d.close();
+    d.querySelector('#fgForm').onsubmit = async e => {
+      e.preventDefault(); const m = $('fgErr'); m.textContent = '';
+      if ($('fgP1').value !== $('fgP2').value) { m.textContent = 'Las contraseñas no coinciden'; return; }
+      try { res = await api('/api/recover', {method: 'POST', body: {code: $('fgCode').value, username: $('fgUser').value.trim(), password: $('fgP1').value}}); }
+      catch (err) { m.textContent = err.message; return; }
+      d.close();
+    };
+  });
+  if (!res) return;
+  await recoveryCodeDialog(res.recovery_code, res.username);
+  registering = false; setAuthMode();
+  $('uName').value = res.username; $('uPass').value = ''; $('uPass').focus();
+  $('authErr').textContent = res.status === 'approved' ? 'Contraseña cambiada. Ya puedes entrar con la nueva.'
+    : res.status === 'pending' ? 'Contraseña cambiada, pero tu cuenta aún está pendiente de aprobación' : 'Contraseña cambiada, pero tu cuenta está desactivada';
+};
+$('recNew').onclick = async () => {
+  let res = null;
+  await recDialog(`<h2 id="recTitle">Código de recuperación</h2>
+    <p class="hint">Te damos un código nuevo y el anterior deja de valer. Sirve para entrar si olvidas tu usuario o tu contraseña.</p>
+    <form id="rcForm"><label for="rcPw">Tu contraseña actual</label><input id="rcPw" type="password" autocomplete="current-password" required>
+      <div class="err" id="rcErr" role="alert"></div>
+      <div class="row" style="justify-content:flex-end"><button type="button" class="ghost" id="rcCancel">Cancelar</button><button type="submit">Crear código nuevo</button></div></form>`, false, d => {
+    d.querySelector('#rcCancel').onclick = () => d.close();
+    d.querySelector('#rcForm').onsubmit = async e => {
+      e.preventDefault();
+      try { res = await api('/api/recovery', {method: 'POST', body: {password: $('rcPw').value}}); } catch (err) { $('rcErr').textContent = err.message; return; }
+      d.close();
+    };
+  });
+  if (res) recoveryCodeDialog(res.recovery_code, me.username);
 };
 $('logout').onclick = async () => { await api('/api/logout', {method: 'POST'}); location.reload(); };
 
@@ -494,9 +592,10 @@ $('nuForm').onsubmit = async e => {
   e.preventDefault(); $('nuErr').textContent = '';
   const username = $('nuName').value.trim(), password = $('nuPass').value;
   try {
-    await api('/api/admin/users', {method: 'POST', body: {username, password, is_admin: $('nuAdmin').checked}});
+    const r = await api('/api/admin/users', {method: 'POST', body: {username, password, is_admin: $('nuAdmin').checked}});
     $('nuName').value = $('nuPass').value = ''; $('nuAdmin').checked = false; loadUsers();
     toast(`Usuario ${username} creado`);
+    if (r && r.recovery_code) recoveryCodeDialog(r.recovery_code, username, true);
   } catch (err) { $('nuErr').textContent = err.message; }
 };
 $('uList').onclick = async e => {

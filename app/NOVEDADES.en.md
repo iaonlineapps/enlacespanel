@@ -2,6 +2,15 @@
 
 <!-- Newest version on top. The Spanish list is in NOVEDADES.md. -->
 
+## 0.5.3
+- **Forgot your username or password?** Every account now has a **recovery code**. It's shown
+  once when the account is created (if your account already existed, the next time you sign in).
+  You can copy it, send it to yourself on WhatsApp, Telegram or email, or download it as a file.
+- If you forget your username or password, tap «Forgot your username or password?» on the sign-in
+  screen, enter the code and a new password, and you'll also see your username.
+- If you lose it, get a new one from the Account tab → «Recovery code».
+- The administrator can still set a new password for anyone.
+
 ## 0.5.2
 - **Quick account switching:** tap your name at the top right to see the other accounts signed in on
   this device; tap one to switch to it without typing the password. "Add another account" signs in
